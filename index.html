@@ -546,6 +546,45 @@ section.page {
   border-radius: 4px;
   color: var(--accent-amber);
 }
+.ai-reply {
+  margin-top: 22px;
+  padding: 18px 22px;
+  background: rgba(164, 120, 212, 0.06);
+  border-left: 2px solid var(--accent-plum);
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+}
+.ai-reply-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-plum);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ai-reply-label::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-plum);
+  box-shadow: 0 0 8px var(--accent-plum);
+}
+.ai-reply-text {
+  color: var(--ink-1);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.ai-reply-text code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  color: var(--accent-amber);
+}
 .takeaway {
   margin-top: 24px;
   padding: 18px 22px;
@@ -1393,11 +1432,8 @@ footer {
       <span>FlightScouter / Walkthrough</span>
     </a>
     <nav class="top-links" aria-label="Điều hướng chính">
-      <a href="#project">Dự án</a>
       <a href="#workflow">Quy trình</a>
       <a href="#prompts">Prompts</a>
-      <a href="#learnings">Bài học</a>
-      <a href="#reproduce">Tái hiện</a>
     </nav>
   </div>
 </header>
@@ -1515,62 +1551,11 @@ footer {
 </section>
 </div>
 
-<!-- ============= SECTION 1 — PROJECT ============= -->
-<div class="shell">
-<section id="project" class="page reveal">
-  <header class="section-head">
-    <div class="section-num">§ 01 — Bài toán</div>
-    <h2 class="section-title">PoC tìm chuyến bay <span class="accent">nhỏ gọn.</span></h2>
-    <p class="section-lead">
-      Mục tiêu không phải xây một website tìm chuyến bay hoàn chỉnh. Mục tiêu là chứng minh
-      AI có thể đảm nhiệm phần lớn khâu phân tích yêu cầu và code, đủ nhanh để demo
-      trực tiếp, đủ thấu đáo để hình dung hoá được ý tưởng.
-    </p>
-  </header>
-
-  <div class="facts">
-    <div class="fact-row">
-      <div class="fact-k">Mục đích</div>
-      <div class="fact-v">Tìm kiếm chuyến bay có filter + sort, kèm dự báo thời tiết tại điểm đến trong khoảng ngày đã chọn.</div>
-    </div>
-    <div class="fact-row">
-      <div class="fact-k">Khán giả</div>
-      <div class="fact-v">Business / Management — xem demo trực tiếp 30 phút. Tác động trực quan quan trọng hơn độ sâu kỹ thuật.</div>
-    </div>
-    <div class="fact-row">
-      <div class="fact-k">Stack</div>
-      <div class="fact-v">
-        <span class="pill">React 19</span>
-        <span class="pill">Vite</span>
-        <span class="pill">TypeScript</span>
-        <span class="pill">Tailwind CSS v4</span>
-        <span class="pill">Axios</span>
-      </div>
-    </div>
-    <div class="fact-row">
-      <div class="fact-k">Dữ liệu</div>
-      <div class="fact-v">
-        <span class="pill accent">Chuyến bay mock — seeded RNG</span>
-        <span class="pill accent">Open-Meteo — thời tiết thật, không cần key</span>
-      </div>
-    </div>
-    <div class="fact-row">
-      <div class="fact-k">Giao diện</div>
-      <div class="fact-v">SPA, glassmorphism trên nền gradient indigo-tím, autocomplete sân bay, filter chip động, dải thời tiết cuộn ngang.</div>
-    </div>
-    <div class="fact-row">
-      <div class="fact-k">Kết quả</div>
-      <div class="fact-v">PoC chạy được, build TypeScript sạch, 3 fix từ code review đã áp dụng, không cần API key để chạy.</div>
-    </div>
-  </div>
-</section>
-</div>
-
-<!-- ============= SECTION 2 — WORKFLOW ============= -->
+<!-- ============= SECTION 1 — WORKFLOW ============= -->
 <div class="shell">
 <section id="workflow" class="page reveal">
   <header class="section-head">
-    <div class="section-num">§ 02 — Quy trình</div>
+    <div class="section-num">§ 01 — Quy trình</div>
     <h2 class="section-title">Sáu bước, <span class="accent">đúng thứ tự.</span></h2>
     <p class="section-lead">
       Mỗi bước mở khoá bước tiếp theo. Phần research chạy song song vì các truy vấn
@@ -1624,7 +1609,7 @@ footer {
 <div class="shell">
 <section id="prompts" class="page reveal">
   <header class="section-head">
-    <div class="section-num">§ 03 — Các prompts</div>
+    <div class="section-num">§ 02 — Các prompts</div>
     <h2 class="section-title">Từng tin nhắn, <span class="accent">theo thứ tự đã gửi.</span></h2>
     <p class="section-lead">
       Prompt của user được giữ nguyên văn — kể cả lỗi chính tả. Giá trị nằm ở mức độ
@@ -1659,6 +1644,11 @@ footer {
           <div class="meta-v"><code>/brainstorm</code> · Solution Brainstormer: áp dụng YAGNI/KISS/DRY, bắt buộc hỏi làm rõ trước khi code.</div>
           <div class="meta-k">Kết quả</div>
           <div class="meta-v">AI scout workspace, sau đó hỏi bốn câu trắc nghiệm (nguồn dữ liệu, stack, thời lượng demo, khán giả) qua <code>AskUserQuestion</code>.</div>
+        </div>
+
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">"Tuyệt vời! Một dự án demo rất hay — website tìm kiếm chuyến bay để showcase AI-driven development." AI spawn <code>Explore</code> subagent scout workspace, xác nhận project trống. Sau đó gọi <code>AskUserQuestion</code> với 4 câu: (1) nguồn dữ liệu — mock / real API / hybrid, (2) tech stack — Next.js / React+Vite / vanilla, (3) thời lượng demo — 15-20 / 30-45 / 60+ phút, (4) khán giả — business / developers / mixed.</div>
         </div>
 
         <div class="takeaway">
@@ -1709,6 +1699,11 @@ footer {
           <div class="meta-v">AI lúc này đã có: ưu tiên API thật, stack tối giản, ngân sách thời gian 30 phút, một yêu cầu ẩn (panel thời tiết), và tín hiệu về khán giả (visual impact &gt; chiều sâu kỹ thuật).</div>
         </div>
 
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">"Tốt lắm! Bạn muốn: Real API cho flight data — tôi sẽ research các free option. React + Vite — gọn nhẹ, phù hợp demo. 30 phút — search + results + filter/sort + weather tại điểm đến. Business audience — focus visual impact + tốc độ delivery. Để tôi research các Flight API miễn phí và Weather API cho bạn." Ngay sau đó dispatch 2 <code>researcher</code> subagent song song ở chế độ nền.</div>
+        </div>
+
         <div class="takeaway">
           <div class="takeaway-label">Bài học</div>
           <div class="takeaway-text">Câu trả lời ngắn vẫn hiệu quả <strong>nếu</strong> kèm ràng buộc. "30 phút tối đa", "bắt mắt và giữ đơn giản", cộng với một yêu cầu bất ngờ (thời tiết) — ba mảnh vụn này truyền tải nhiều thông tin thiết kế hơn ba đoạn văn.</div>
@@ -1746,6 +1741,11 @@ footer {
           <div class="meta-v">(a) Free flight APIs — Kiwi Tequila, Amadeus, Skyscanner, AviationStack, FlightAPI.io, Google Flights. (b) Free weather APIs — Open-Meteo, Visual Crossing, Tomorrow.io, OpenWeatherMap, WeatherAPI.</div>
           <div class="meta-k">Kết quả</div>
           <div class="meta-v">Hai báo cáo được lưu trong <code>plans/reports/</code>. Người thắng: <strong>Kiwi Tequila</strong> cho chuyến bay, <strong>Open-Meteo</strong> cho thời tiết (không cần API key).</div>
+        </div>
+
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">Sau khi dispatch, AI thông báo "Đang research song song <strong>Flight APIs</strong> và <strong>Weather APIs</strong> miễn phí. Sẽ có kết quả ngay." Khi hai agent trả về, AI tổng hợp: "Flight API: <strong>Kiwi Tequila API</strong> (Winner) — Free, không cần credit card, real-time pricing. Weather API: <strong>Open-Meteo</strong> (Winner) — Free, không cần API key luôn — zero friction cho demo." Rồi tiếp tục hỏi thêm 3 câu về UI style, filter scope, ngôn ngữ.</div>
         </div>
 
         <div class="takeaway">
@@ -1794,6 +1794,11 @@ footer {
           <div class="meta-v">Glassmorphism được chọn trong vài giây thay vì cả đoạn mô tả dài, và AI có thể show mockup ngay cạnh nhãn option.</div>
         </div>
 
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">AI tổng hợp Design Summary thành bảng: Purpose, Stack, Flight API, Weather API, UI Style, Filters, Language, Demo time. Liệt kê 5 features trong scope + kiến trúc SPA. Note quan trọng: "Không cần backend — tất cả gọi API trực tiếp từ client (Kiwi cho phép CORS, Open-Meteo không cần key)." Rồi hỏi "Bạn có muốn thêm/bớt gì không? Nếu OK thì tôi sẽ tạo tài liệu yêu cầu (brainstorm report) và tiếp tục sang plan."</div>
+        </div>
+
         <div class="takeaway">
           <div class="takeaway-label">Bài học</div>
           <div class="takeaway-text">Chọn thiết kế nhanh hơn khi có <strong>bất kỳ</strong> hình ảnh nào — kể cả ASCII. Nếu model có thể render preview ngay trong câu hỏi, dùng nó. Mô tả layout bằng lời thường thiếu chi tiết.</div>
@@ -1823,6 +1828,11 @@ footer {
           <div class="meta-v">Thể hiện do dự, rồi quyết định dứt khoát đi tiếp thay vì cứ xoay quanh.</div>
           <div class="meta-k">Kết quả</div>
           <div class="meta-v"><code>brainstorm-report.md</code> + <code>plan.md</code> chi tiết 6 phase, mỗi phase có step, danh sách file, tiêu chí hoàn thành, dependency.</div>
+        </div>
+
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">Lần đầu: "Bạn muốn chỉnh sửa gì? Cứ nói thoải mái." Ngay khi user đổi ý, AI hiểu ý và hành động: viết 2 file vào <code>FlightScouter_AI-demo/</code> — <code>brainstorm-report.md</code> (problem, decisions, architecture, risks, success criteria) và <code>plan.md</code> (6 phase × step/file/success criteria, tổng ~30 phút). Kết: "Review và cho tôi biết muốn chỉnh gì nhé! Khi OK tôi sẽ bắt đầu implement."</div>
         </div>
 
         <div class="takeaway">
@@ -1855,6 +1865,11 @@ footer {
           <div class="meta-v">AI giải thích: 6 phase tuần tự (mỗi phase là một dispatch <code>fullstack-developer</code>), lý do tuần tự chứ không song song (mọi phase đều sửa <code>App.tsx</code>), build check giữa phase, code review cuối cùng.</div>
         </div>
 
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">AI trả lời bằng diagram ASCII flow: Phase 1 Scaffold (3 phút) → Phase 2 Search Form (5 phút) → Phase 3 Flight API + Results (8 phút) → Phase 4 Filter/Sort (4 phút) → Phase 5 Weather Panel (5 phút) → Phase 6 Glassmorphism Polish (5 phút). Giải thích rõ "Tại sao tuần tự? Mỗi phase phụ thuộc phase trước. Parallel sẽ gây conflict vì cùng edit <code>App.tsx</code>. Tuần tự = mỗi step build on top of previous = ít bug hơn." Và kế hoạch verify sau mỗi phase + code review cuối.</div>
+        </div>
+
         <div class="takeaway">
           <div class="takeaway-label">Bài học</div>
           <div class="takeaway-text">Một đoạn "bạn sẽ làm gì tiếp theo" của AI sẽ phơi bày các hiểu lầm mà nếu không sẽ biến thành merge conflict một tiếng sau.</div>
@@ -1883,6 +1898,11 @@ footer {
           <div class="meta-v">Xem trước danh sách công cụ. Cái nào bất ngờ là cơ hội để veto.</div>
           <div class="meta-k">Kết quả</div>
           <div class="meta-v">AI liệt kê <code>fullstack-developer</code>, <code>code-reviewer</code>, <code>code-simplifier</code>, cùng các skill <code>cook</code>, <code>fix</code>, <code>simplify</code>, <code>docs-seeker</code>, <code>react-best-practices</code>, kèm điều kiện kích hoạt từng cái.</div>
+        </div>
+
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">AI trả lời bằng 3 bảng: (1) <strong>Agents</strong> — fullstack-developer (implement 6 phase), code-reviewer (review sau Phase 6), code-simplifier (nếu reviewer phát hiện code phức tạp). (2) <strong>Skills</strong> — cook (checklist mỗi phase), fix (bugs), simplify (post-phase review), docs-seeker (tra Kiwi/Open-Meteo docs), react-best-practices. (3) <strong>Verification trực tiếp</strong> — <code>npm run build</code>, <code>npm run dev</code>, <code>npx tsc --noEmit</code> sau mỗi phase. Kết: "Bắt đầu implement không?"</div>
         </div>
 
         <div class="takeaway">
@@ -1928,6 +1948,11 @@ footer {
           <div class="meta-v">SPA chạy: build sạch, theme glassmorphism, skeleton loader, animation fade-in cho danh sách, pipeline city → weather hoạt động.</div>
         </div>
 
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">"Let's go! Bắt đầu Phase 1 — Scaffold project." Invoke <code>/cook</code>, tạo <code>TodoWrite</code> 7 items. Phase 1 gặp lỗi "directory not empty" vì có sẵn <code>brainstorm-report.md</code> + <code>plan.md</code> — AI tự fix bằng cách scaffold Vite vào <code>/tmp</code> rồi copy vào. Các phase kế tiếp mỗi cái là một <code>fullstack-developer</code> dispatch với acceptance criteria rõ ràng. Giữa Phase 2 và 3, AI bắt lỗi <code>verbatimModuleSyntax</code> type-import, fix ngay, verify build lại. Sau Phase 6, dispatch <code>code-reviewer</code> tìm ra 3 issues: <code>.env</code> chưa gitignore, thiếu null guard trong weather mapping, duplicate <code>SearchParams</code> type. Apply 2 fix đầu (fix #3 bỏ qua vì là demo).</div>
+        </div>
+
         <div class="takeaway">
           <div class="takeaway-label">Bài học</div>
           <div class="takeaway-text">Khi đã đầu tư plan và approval rõ ràng từ trước, prompt thực thi có thể gần như trống. "<strong>Chạy đi</strong>" hoạt động được vì <code>plan.md</code>, danh sách agent, và tiêu chí hoàn thành đã được chốt trước đó.</div>
@@ -1956,6 +1981,11 @@ footer {
           <div class="meta-v">Nhớ rằng đăng ký dịch vụ bên ngoài vẫn là bước của con người.</div>
           <div class="meta-k">Kết quả</div>
           <div class="meta-v">AI cung cấp URL đăng ký, quy trình My Solution, và entry <code>.env</code> chính xác.</div>
+        </div>
+
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">"Đăng ký tại <strong>tequila.kiwi.com</strong>: 1) Vào <code>https://tequila.kiwi.com/portal/login/register</code>. 2) Tạo tài khoản (free, không cần credit card). 3) Sau khi đăng nhập, vào <strong>My Solution</strong> → tạo 1 solution mới. 4) API key sẽ hiện trong dashboard — copy nó. 5) Paste vào file <code>.env</code>: <code>VITE_KIWI_API_KEY=your_actual_key_here</code>. Xong rồi chạy <code>npm run dev</code> là test được ngay."</div>
         </div>
 
         <div class="takeaway">
@@ -1992,6 +2022,11 @@ footer {
           <div class="meta-v">Không bế tắc. AI biến blocker thành câu hỏi lựa chọn.</div>
         </div>
 
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">"Để tôi kiểm tra xem Kiwi Tequila API còn hoạt động không." Dispatch <code>researcher</code> agent verify + tìm alternatives. Kết quả return sau ~16 giây: Kiwi vẫn hoạt động (có thể do lỗi mạng local), Amadeus là backup tốt nhất. AI offer 3 options: "<strong>Thử lại Kiwi</strong> / <strong>Chuyển sang Amadeus</strong> (tôi update code) / <strong>Dùng mock data</strong> (không cần API key gì cả)." Để user quyết định thay vì tự ý fix.</div>
+        </div>
+
         <div class="takeaway">
           <div class="takeaway-label">Bài học</div>
           <div class="takeaway-text">Không cần chẩn đoán trước khi báo. "X không chạy" + không phân tích thường nhanh hơn nửa-chẩn-đoán, vì AI có thể verify, so sánh phương án, rồi trình bày mà không bị gán ý.</div>
@@ -2024,6 +2059,11 @@ footer {
           <div class="meta-v">Một dispatch <code>researcher</code> ngắn xác nhận <strong>static JSON</strong> curate sẵn (ví dụ <code>mwgg/Airports</code>) là phương án tốt nhất cho demo — không fetch, không rate limit.</div>
           <div class="meta-k">Kết quả</div>
           <div class="meta-v">Main agent xây: dataset 50 sân bay (<code>src/data/airports.ts</code>), component autocomplete <code>AirportSelect</code>, và flight generator <strong>seeded</strong> trả về kết quả giống nhau với cùng input — quan trọng cho live demo.</div>
+        </div>
+
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">"Hiểu! Chuyển sang mock data cho flights, giữ weather API thật. Tôi sẽ: 1) Tìm API mở cho danh sách sân bay. 2) Update <code>flight-api.ts</code> để generate random flights. 3) Thêm airport autocomplete vào SearchForm." Dispatch <code>researcher</code> nhanh → chọn embed static JSON. Sau đó tự viết trực tiếp 4 file mới: <code>airports.ts</code> (50 sân bay curated với lat/lon), <code>AirportSelect.tsx</code> (dropdown component), rewrite <code>flight-api.ts</code> (distance-based duration + seeded RNG + price model), update <code>SearchForm.tsx</code> dùng component mới. Build sạch. Xoá Kiwi API key khỏi <code>.env</code>.</div>
         </div>
 
         <div class="takeaway">
@@ -2060,6 +2100,11 @@ footer {
           <div class="meta-v">Tài liệu này.</div>
         </div>
 
+        <div class="ai-reply">
+          <div class="ai-reply-label">Phản hồi của AI</div>
+          <div class="ai-reply-text">Invoke <code>/frontend-design</code> skill. Theo Design Thinking workflow: chọn hướng editorial/technical magazine — serif display, asymmetric grid, atmosphere dark plum-amber. Viết 1 file HTML self-contained (~1700 dòng CSS + HTML + JS) với 9 section: Hero, Project, Workflow, 12 Prompt cards, Skills, Subagents, Learnings, Timeline, Reproduce, Artifacts. Các lần iterate sau: dịch sang tiếng Việt + đổi font Be Vietnam Pro (Instrument Serif không đủ Unicode), compile React app thành vanilla JS nhúng vào đầu trang để user tương tác, deploy lên GitHub Pages tại <code>mor-nhatlq.github.io/AI-demo-flight-scouter</code>.</div>
+        </div>
+
         <div class="takeaway">
           <div class="takeaway-label">Bài học</div>
           <div class="takeaway-text">AI đã có context đầy đủ về những gì vừa xảy ra. Yêu cầu nó tạo artifact giảng dạy ngay trong cùng phiên rẻ hơn hẳn viết ghi chú sau — và chi tiết còn tươi mới.</div>
@@ -2075,7 +2120,7 @@ footer {
 <div class="shell">
 <section class="page reveal">
   <header class="section-head">
-    <div class="section-num">§ 04 — Skills</div>
+    <div class="section-num">§ 03 — Skills</div>
     <h2 class="section-title">Danh sách công cụ, <span class="accent">đặt tên rõ ràng.</span></h2>
     <p class="section-lead">
       Skill là những hợp đồng markdown nhỏ thay đổi cách main agent hành xử. Bản thân
@@ -2128,100 +2173,11 @@ footer {
 </section>
 </div>
 
-<!-- ============= SECTION 5 — AGENTS REF ============= -->
+<!-- ============= SECTION 4 — TIMELINE ============= -->
 <div class="shell">
 <section class="page reveal">
   <header class="section-head">
-    <div class="section-num">§ 05 — Subagents</div>
-    <h2 class="section-title">Context window <span class="accent">đi thuê.</span></h2>
-    <p class="section-lead">
-      Mỗi subagent khởi đầu với context 200k tươi và trả về đúng một reply. Chúng giữ
-      các artifact cồng kềnh — kết quả search, bảng so sánh, diff dài — ra khỏi main thread.
-    </p>
-  </header>
-
-  <div class="ref-grid">
-    <div class="ref-card">
-      <div class="ref-name">researcher <span class="kind">subagent</span></div>
-      <div class="ref-desc">Research kỹ thuật đa nguồn có trích dẫn. Dùng ba lần: flight APIs, weather APIs, và giữa chừng check xem Kiwi còn nhận đăng ký không.</div>
-    </div>
-    <div class="ref-card">
-      <div class="ref-name">fullstack-developer <span class="kind">subagent</span></div>
-      <div class="ref-desc">Thực thi các phase triển khai với tiêu chí hoàn thành chặt. Đảm nhiệm phase 2, 3, 5 — các edit lớn nhất. File ownership tách biệt tránh xung đột.</div>
-    </div>
-    <div class="ref-card">
-      <div class="ref-name">code-reviewer <span class="kind">subagent</span></div>
-      <div class="ref-desc">Code review adversarial kèm red-team analysis. Phát hiện <code>.env</code> chưa gitignore, thiếu null guard trong weather mapping, và type <code>SearchParams</code> bị duplicate.</div>
-    </div>
-    <div class="ref-card">
-      <div class="ref-name">Explore <span class="kind">subagent</span></div>
-      <div class="ref-desc">Codebase scouting nhanh. Dùng một lần đầu <code>/brainstorm</code> để xác nhận workspace đủ trống để bắt đầu mới.</div>
-    </div>
-  </div>
-</section>
-</div>
-
-<!-- ============= SECTION 6 — LEARNINGS ============= -->
-<div class="shell">
-<section id="learnings" class="page reveal">
-  <header class="section-head">
-    <div class="section-num">§ 06 — Bài học</div>
-    <h2 class="section-title">Mười <span class="accent">thói quen nhỏ</span> khiến phiên này ngắn lại.</h2>
-    <p class="section-lead">
-      Không có gì cao siêu. Cộng lại: một phiên lẽ ra hai tiếng rút xuống dưới một tiếng.
-    </p>
-  </header>
-
-  <ol class="learnings">
-    <li>
-      <strong>Mở đầu bằng TẠI SAO và MỤC TIÊU, không phải chi tiết kỹ thuật.</strong>
-      <p>Prompt đầu tiên nêu demo và khán giả trước khi nêu stack. AI đề xuất scope phù hợp thay vì ngoan ngoãn wire một framework bạn sẽ hối tiếc sau.</p>
-    </li>
-    <li>
-      <strong>Câu trả lời ngắn kèm ràng buộc &gt; câu trả lời dài.</strong>
-      <p>"30 phút tối đa", "bắt mắt và giữ đơn giản", "thời tiết tại điểm đến" — ba mảnh vụn này truyền tải nhiều thông tin thiết kế hơn một trang văn bản.</p>
-    </li>
-    <li>
-      <strong>Preview đánh bại mô tả cho các quyết định layout.</strong>
-      <p><code>AskUserQuestion</code> kèm ASCII mockup giúp user chọn glassmorphism trong vài giây. Mô tả ba UI bằng lời tốn gấp mười lần và vẫn thiếu chi tiết.</p>
-    </li>
-    <li>
-      <strong>Song song mọi thứ độc lập.</strong>
-      <p>Research flight API và research weather API không giao nhau, nên chạy song song nền. Tiết kiệm ~40 giây wall time và hai bảng so sánh không lọt vào main context.</p>
-    </li>
-    <li>
-      <strong>Tuần tự mọi thứ sửa cùng một file.</strong>
-      <p>Mọi phase của FlightScouter đều đụng <code>App.tsx</code>. Chạy song song sẽ đảm bảo có merge conflict. Dispatch tuần tự kèm build check giữa các phase nhanh hơn về tổng thể.</p>
-    </li>
-    <li>
-      <strong>Verify sau từng phase.</strong>
-      <p><code>npx tsc --noEmit</code> + <code>npm run build</code> giữa các phase bắt được một lỗi type-import <code>verbatimModuleSyntax</code> ngay lập tức — một phút fix bây giờ so với lỗi nhân lên sau này.</p>
-    </li>
-    <li>
-      <strong>Audit kế hoạch trước khi duyệt.</strong>
-      <p>Hỏi "workflow của bạn là gì?" phơi bày lý do sequencing. Hỏi "bạn dùng agent gì?" phơi bày danh sách công cụ. Veto rẻ xảy ra trước khi code được viết.</p>
-    </li>
-    <li>
-      <strong>Đừng ngại đổi hướng.</strong>
-      <p>Push-back hai chữ ("<strong>À thôi</strong>", "<strong>Chạy đi</strong>") không tốn gì mà chuyển hướng tin cậy. Im lặng hay lịch sự tốn nhiều hơn.</p>
-    </li>
-    <li>
-      <strong>Báo blocker mà không chẩn đoán.</strong>
-      <p>"không vào được nha..." là đủ. AI verify API, so sánh phương án, đưa ra ba đường đi. Tự chẩn đoán hộ AI thường làm hẹp không gian nghiệm của nó.</p>
-    </li>
-    <li>
-      <strong>Pivot rẻ ở đúng độ cao.</strong>
-      <p>"Dùng mock data, giữ weather thật" là lệnh CÁI GÌ. Chi tiết cài đặt (seeded RNG, ước lượng thời gian theo khoảng cách, danh sách sân bay curated) vẫn thuộc về AI — đúng chỗ của chúng.</p>
-    </li>
-  </ol>
-</section>
-</div>
-
-<!-- ============= SECTION 7 — TIMELINE ============= -->
-<div class="shell">
-<section class="page reveal">
-  <header class="section-head">
-    <div class="section-num">§ 07 — Timeline</div>
+    <div class="section-num">§ 04 — Timeline</div>
     <h2 class="section-title">Khoảng <span class="accent">45 phút,</span> từ brief đến build.</h2>
     <p class="section-lead">
       Timestamp xấp xỉ. Phase research chồng lên phase clarify vì hai background agent
@@ -2306,113 +2262,6 @@ footer {
 </section>
 </div>
 
-<!-- ============= SECTION 8 — REPRODUCE ============= -->
-<div class="shell">
-<section id="reproduce" class="page reveal">
-  <header class="section-head">
-    <div class="section-num">§ 08 — Tái hiện</div>
-    <h2 class="section-title">Phiên mới, <span class="accent">PoC của riêng bạn.</span></h2>
-    <p class="section-lead">
-      Paste các prompt theo thứ tự, trả lời câu hỏi làm rõ bằng ràng buộc của riêng bạn.
-      Trình tự là bài học.
-    </p>
-  </header>
-
-  <div class="repro">
-    <div class="repro-step">
-      <div class="sn">1</div>
-      <div class="st">Gọi <code>/brainstorm</code> và nêu mục tiêu + khán giả + định dạng demo. Gác chi tiết kỹ thuật sang một bên.</div>
-      <div class="sd">~1 phút</div>
-    </div>
-    <div class="repro-step">
-      <div class="sn">2</div>
-      <div class="st">Trả lời bốn câu hỏi làm rõ — gắn ràng buộc vào từng câu (ngân sách thời gian, tông điệu, yêu cầu bất ngờ).</div>
-      <div class="sd">~2 phút</div>
-    </div>
-    <div class="repro-step">
-      <div class="sn">3</div>
-      <div class="st">Để AI dispatch các <strong>researcher</strong> agent cho mọi thứ thuộc bên ngoài và độc lập (APIs, libraries).</div>
-      <div class="sd">nền</div>
-    </div>
-    <div class="repro-step">
-      <div class="sn">4</div>
-      <div class="st">Chọn phong cách UI, cắt scope, và ngôn ngữ qua <code>AskUserQuestion</code> preview.</div>
-      <div class="sd">~1 phút</div>
-    </div>
-    <div class="repro-step">
-      <div class="sn">5</div>
-      <div class="st">Yêu cầu viết <code>brainstorm-report.md</code> + <code>plan.md</code> vào folder dự án.</div>
-      <div class="sd">~2 phút</div>
-    </div>
-    <div class="repro-step">
-      <div class="sn">6</div>
-      <div class="st">Hỏi "workflow của bạn là gì?" và "dùng agent/skill nào?" — audit cả hai.</div>
-      <div class="sd">~1 phút</div>
-    </div>
-    <div class="repro-step">
-      <div class="sn">7</div>
-      <div class="st">Chạy <code>/cook plan.md</code>. Review từng phase; fix compile error trước khi chạy phase tiếp theo.</div>
-      <div class="sd">~15 phút</div>
-    </div>
-    <div class="repro-step">
-      <div class="sn">8</div>
-      <div class="st">Để <code>code-reviewer</code> subagent scan toàn project. Chỉ apply 3 finding ưu tiên nhất.</div>
-      <div class="sd">~3 phút</div>
-    </div>
-    <div class="repro-step">
-      <div class="sn">9</div>
-      <div class="st">Nếu gặp blocker (thiếu key, 404, đăng ký chết), báo thẳng. Để AI đưa ra phương án.</div>
-      <div class="sd">khi cần</div>
-    </div>
-    <div class="repro-step">
-      <div class="sn">10</div>
-      <div class="st">Yêu cầu walkthrough HTML qua <code>/frontend-design</code> khi context vẫn còn tươi.</div>
-      <div class="sd">~3 phút</div>
-    </div>
-  </div>
-</section>
-</div>
-
-<!-- ============= SECTION 9 — ARTIFACTS ============= -->
-<div class="shell">
-<section class="page reveal">
-  <header class="section-head">
-    <div class="section-num">§ 09 — Thành phẩm</div>
-    <h2 class="section-title">Những gì phiên làm việc <span class="accent">để lại.</span></h2>
-    <p class="section-lead">
-      Mọi file AI đã tạo trong phiên, gom theo vai trò.
-    </p>
-  </header>
-
-  <pre class="tree"><span class="dir">FlightScouter_AI-demo/</span>
-├── <span class="file">brainstorm-report.md</span>              <span class="anno"># viết sau P5</span>
-├── <span class="file">plan.md</span>                            <span class="anno"># plan 6 phase</span>
-├── <span class="file">session-walkthrough.html</span>           <span class="anno"># tài liệu này</span>
-├── <span class="file">index.html</span>
-├── <span class="file">vite.config.ts</span>
-├── <span class="file">.env</span>                               <span class="anno"># đã gitignore sau review</span>
-├── <span class="dir">src/</span>
-│   ├── <span class="file">App.tsx</span>                        <span class="anno"># state + wiring</span>
-│   ├── <span class="file">main.tsx</span>
-│   ├── <span class="file">index.css</span>                      <span class="anno"># Tailwind + keyframe fade-in</span>
-│   ├── <span class="dir">components/</span>
-│   │   ├── <span class="file">SearchForm.tsx</span>
-│   │   ├── <span class="file">AirportSelect.tsx</span>          <span class="anno"># thêm lúc pivot</span>
-│   │   ├── <span class="file">FlightResults.tsx</span>
-│   │   ├── <span class="file">FilterBar.tsx</span>
-│   │   └── <span class="file">WeatherPanel.tsx</span>
-│   ├── <span class="dir">services/</span>
-│   │   ├── <span class="file">flight-api.ts</span>              <span class="anno"># mock generator seeded</span>
-│   │   └── <span class="file">weather-api.ts</span>             <span class="anno"># Open-Meteo + geocoder</span>
-│   └── <span class="dir">data/</span>
-│       └── <span class="file">airports.ts</span>                <span class="anno"># 50 sân bay curated</span>
-
-<span class="dir">plans/reports/</span>
-├── <span class="file">researcher-260407-1534-flight-search-api-comparison.md</span>
-├── <span class="file">researcher-260407-1534-weather-api-comparison.md</span>
-└── <span class="file">code-reviewer-260407-1630-flightscouter-full-review.md</span></pre>
-</section>
-</div>
 
 </main>
 
