@@ -1,0 +1,3047 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FlightScouter — Hướng dẫn phát triển với AI</title>
+<meta name="description" content="Tài liệu training ghi lại từng prompt, skill và subagent được dùng để xây dựng FlightScouter trong một phiên hội thoại AI duy nhất." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+/* ---------- tokens ---------- */
+:root {
+  --bg-0: #0a0612;
+  --bg-1: #120a1f;
+  --bg-2: #1a0f2e;
+  --surface-1: rgba(255, 255, 255, 0.03);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --surface-3: rgba(255, 255, 255, 0.09);
+  --border-1: rgba(255, 255, 255, 0.08);
+  --border-2: rgba(255, 255, 255, 0.14);
+  --border-3: rgba(255, 255, 255, 0.22);
+
+  --ink-0: #f7f4ee;
+  --ink-1: #e8e2d5;
+  --ink-2: #9e95a8;
+  --ink-3: #6b6378;
+  --ink-4: #3f3a4a;
+
+  --accent-amber: #e8a456;
+  --accent-amber-soft: rgba(232, 164, 86, 0.14);
+  --accent-plum: #a478d4;
+  --accent-plum-soft: rgba(164, 120, 212, 0.12);
+  --accent-sage: #8fb896;
+
+  --display: 'Be Vietnam Pro', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --sans: 'Be Vietnam Pro', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+
+  --max: 1100px;
+  --radius-s: 6px;
+  --radius-m: 12px;
+  --radius-l: 20px;
+
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 32px; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-1);
+  background: var(--bg-0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* atmosphere */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(164, 120, 212, 0.18), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 20%, rgba(232, 164, 86, 0.08), transparent 55%),
+    radial-gradient(ellipse 70% 60% at 50% 100%, rgba(96, 68, 168, 0.12), transparent 65%),
+    linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 40%, var(--bg-0) 100%);
+  pointer-events: none;
+}
+.atmosphere::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+}
+
+/* ---------- layout shell ---------- */
+.shell {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+.top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  background: rgba(10, 6, 18, 0.72);
+  border-bottom: 1px solid var(--border-1);
+}
+.top-bar-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-1);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.brand-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, var(--accent-plum), var(--accent-amber));
+  position: relative;
+}
+.brand-mark::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 3px;
+  background: var(--bg-0);
+}
+.brand-mark::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+.top-links {
+  display: flex;
+  gap: 22px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.top-links a {
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.top-links a:hover { color: var(--ink-0); }
+
+@media (max-width: 680px) {
+  .top-links { display: none; }
+}
+
+/* ---------- hero ---------- */
+.hero {
+  padding: 110px 0 80px;
+  position: relative;
+}
+.hero-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-amber);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hero-label::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--accent-amber);
+}
+.hero h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(42px, 7vw, 72px);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  color: var(--ink-0);
+  margin: 0 0 28px;
+  max-width: 18ch;
+}
+.hero h1 .accent {
+  color: var(--accent-amber);
+  font-weight: 700;
+}
+.hero-sub {
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  max-width: 60ch;
+  margin: 0 0 44px;
+  font-weight: 400;
+}
+.hero-sub strong {
+  color: var(--ink-1);
+  font-weight: 600;
+}
+
+/* stats strip */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  background: var(--border-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  margin-top: 40px;
+}
+.stat {
+  padding: 22px 20px;
+  background: var(--bg-1);
+}
+.stat-n {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--ink-0);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+.stat-n .unit {
+  color: var(--accent-amber);
+  font-size: 22px;
+  font-weight: 600;
+}
+.stat-l {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+@media (max-width: 860px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat:last-child { grid-column: 1 / -1; }
+}
+
+/* ---------- section chrome ---------- */
+section.page {
+  padding: 96px 0;
+  border-top: 1px solid var(--border-1);
+  position: relative;
+}
+.section-head {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 40px;
+  margin-bottom: 56px;
+  align-items: baseline;
+}
+.section-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-top: 12px;
+  border-top: 1px solid var(--border-2);
+}
+.section-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(30px, 4.5vw, 44px);
+  line-height: 1.1;
+  letter-spacing: -0.022em;
+  color: var(--ink-0);
+  margin: 0;
+}
+.section-title .accent {
+  color: var(--accent-amber);
+  font-weight: 700;
+}
+.section-lead {
+  grid-column: 2;
+  color: var(--ink-2);
+  font-size: 16px;
+  line-height: 1.65;
+  max-width: 62ch;
+  margin-top: 18px;
+}
+@media (max-width: 720px) {
+  .section-head { grid-template-columns: 1fr; gap: 12px; }
+  .section-lead { grid-column: 1; }
+}
+
+/* ---------- project facts ---------- */
+.facts {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 40px 40px;
+  padding-bottom: 20px;
+}
+.fact-row { display: contents; }
+.fact-k {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 18px 0;
+  border-top: 1px solid var(--border-1);
+}
+.fact-v {
+  padding: 18px 0;
+  border-top: 1px solid var(--border-1);
+  color: var(--ink-1);
+  font-size: 15px;
+}
+.fact-v .pill {
+  display: inline-block;
+  padding: 3px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: 100px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-1);
+  margin: 2px 4px 2px 0;
+}
+.fact-v .pill.accent {
+  background: var(--accent-amber-soft);
+  border-color: rgba(232, 164, 86, 0.3);
+  color: var(--accent-amber);
+}
+@media (max-width: 720px) {
+  .facts { grid-template-columns: 1fr; gap: 0; }
+  .fact-k { padding-bottom: 0; border-bottom: 0; }
+  .fact-v { padding-top: 6px; border-top: 0; padding-bottom: 18px; border-bottom: 1px solid var(--border-1); }
+}
+
+/* ---------- workflow flow ---------- */
+.flow {
+  display: flex;
+  gap: 0;
+  margin-top: 8px;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  background: var(--bg-1);
+}
+.flow-step {
+  flex: 1;
+  padding: 26px 22px;
+  border-right: 1px solid var(--border-1);
+  position: relative;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.flow-step:last-child { border-right: 0; }
+.flow-step .num {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--accent-amber);
+  text-transform: uppercase;
+}
+.flow-step .title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink-0);
+  letter-spacing: -0.015em;
+}
+.flow-step .desc {
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.55;
+  margin-top: auto;
+}
+.flow-step .arrow {
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--accent-amber);
+}
+@media (max-width: 860px) {
+  .flow { flex-direction: column; }
+  .flow-step { border-right: 0; border-bottom: 1px solid var(--border-1); min-height: unset; }
+  .flow-step:last-child { border-bottom: 0; }
+  .flow-step .arrow { display: none; }
+}
+
+/* ---------- prompt cards ---------- */
+.prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.prompt-card {
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-l);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 50%),
+    var(--bg-1);
+  overflow: hidden;
+  box-shadow: var(--shadow-inset);
+  position: relative;
+  transition: border-color 0.3s, transform 0.3s;
+}
+.prompt-card:hover { border-color: var(--border-2); }
+.prompt-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid var(--border-1);
+}
+.prompt-ord {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 38px;
+  line-height: 0.9;
+  color: var(--accent-amber);
+  min-width: 64px;
+  letter-spacing: -0.03em;
+}
+.prompt-meta { flex: 1; }
+.prompt-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.prompt-tag .time { color: var(--accent-plum); }
+.prompt-tag .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--ink-4); }
+.prompt-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.25;
+  color: var(--ink-0);
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+.prompt-body { padding: 24px 32px 32px; }
+
+.quote {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink-0);
+  font-weight: 400;
+  padding: 20px 24px;
+  border-left: 3px solid var(--accent-amber);
+  background: var(--accent-amber-soft);
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+  margin: 0 0 24px;
+  position: relative;
+}
+.quote::before {
+  content: '“';
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  font-family: Georgia, serif;
+  font-size: 52px;
+  color: var(--accent-amber);
+  opacity: 0.28;
+  line-height: 1;
+}
+
+.answer-block { margin-bottom: 20px; }
+.answer-block:last-child { margin-bottom: 0; }
+.answer-q {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+.answer-a {
+  color: var(--ink-1);
+  font-size: 15px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border-2);
+  line-height: 1.6;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 12px 24px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-1);
+}
+.meta-k {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-top: 3px;
+}
+.meta-v {
+  color: var(--ink-1);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.meta-v code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 7px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: 4px;
+  color: var(--accent-amber);
+}
+.takeaway {
+  margin-top: 24px;
+  padding: 18px 22px;
+  background: var(--surface-1);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--radius-m);
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.takeaway-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-sage);
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.takeaway-text {
+  color: var(--ink-1);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.takeaway-text strong { color: var(--ink-0); font-weight: 600; }
+
+@media (max-width: 680px) {
+  .prompt-head { flex-direction: column; padding: 24px; gap: 4px; }
+  .prompt-ord { font-size: 32px; }
+  .prompt-body { padding: 20px 24px 24px; }
+  .meta-grid { grid-template-columns: 1fr; gap: 4px; }
+  .meta-k { padding-top: 14px; }
+  .meta-v { padding-bottom: 8px; padding-left: 0; }
+}
+
+/* ---------- card grid (skills/agents) ---------- */
+.ref-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+.ref-card {
+  padding: 24px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-m);
+  transition: transform 0.3s, border-color 0.3s, background 0.3s;
+}
+.ref-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-3);
+  background: var(--bg-2);
+}
+.ref-name {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent-amber);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.ref-name .kind {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.ref-desc {
+  color: var(--ink-1);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.ref-desc code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent-amber);
+}
+@media (max-width: 680px) {
+  .ref-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- learnings list ---------- */
+.learnings {
+  counter-reset: lesson;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.learnings li {
+  counter-increment: lesson;
+  padding: 22px 0 22px 72px;
+  border-top: 1px solid var(--border-1);
+  position: relative;
+}
+.learnings li:last-child { border-bottom: 1px solid var(--border-1); }
+.learnings li::before {
+  content: counter(lesson, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 26px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--accent-amber);
+  letter-spacing: -0.03em;
+}
+.learnings strong {
+  display: block;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--ink-0);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+.learnings p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.learnings p code, .learnings strong code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  color: var(--accent-amber);
+}
+
+/* ---------- timeline ---------- */
+.timeline {
+  position: relative;
+  padding-left: 32px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    var(--border-2) 8%,
+    var(--border-2) 92%,
+    transparent 100%);
+}
+.t-item {
+  position: relative;
+  padding: 14px 0;
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 24px;
+  align-items: baseline;
+}
+.t-item::before {
+  content: '';
+  position: absolute;
+  left: -32px;
+  top: 22px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--bg-0);
+  border: 2px solid var(--border-3);
+  box-shadow: 0 0 0 4px var(--bg-0);
+}
+.t-item.milestone::before {
+  border-color: var(--accent-amber);
+  background: var(--accent-amber);
+  box-shadow: 0 0 0 4px var(--bg-0), 0 0 16px var(--accent-amber);
+}
+.t-time {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent-amber);
+  letter-spacing: 0.04em;
+}
+.t-body {
+  color: var(--ink-1);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.t-body strong {
+  color: var(--ink-0);
+  font-weight: 600;
+}
+.t-body code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent-amber);
+}
+
+/* ---------- reproduce steps ---------- */
+.repro {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--border-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+}
+.repro-step {
+  padding: 20px 28px;
+  background: var(--bg-1);
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  gap: 20px;
+  align-items: center;
+}
+.repro-step .sn {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--accent-amber);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.repro-step .st {
+  color: var(--ink-0);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.repro-step .st code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 2px 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: 4px;
+  color: var(--accent-amber);
+}
+.repro-step .sd {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+@media (max-width: 680px) {
+  .repro-step { grid-template-columns: 36px 1fr; gap: 14px; padding: 16px 20px; }
+  .repro-step .sd { grid-column: 2; }
+}
+
+/* ---------- artifacts tree ---------- */
+.tree {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--ink-2);
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-m);
+  padding: 24px 28px;
+  overflow-x: auto;
+}
+.tree .dir { color: var(--accent-plum); }
+.tree .file { color: var(--ink-1); }
+.tree .anno { color: var(--ink-3); font-style: italic; }
+
+/* ---------- footer ---------- */
+footer {
+  padding: 60px 0 80px;
+  border-top: 1px solid var(--border-1);
+  margin-top: 80px;
+}
+.foot-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 40px;
+}
+.foot-col h4 {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 14px;
+}
+.foot-col p {
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+.foot-col a {
+  display: block;
+  color: var(--ink-1);
+  font-size: 13px;
+  line-height: 2;
+  text-decoration: none;
+  font-family: var(--mono);
+  transition: color 0.2s;
+}
+.foot-col a:hover { color: var(--accent-amber); }
+
+.sig {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 17px;
+  color: var(--ink-0);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+.sig::before {
+  content: '— ';
+  color: var(--accent-amber);
+}
+@media (max-width: 720px) {
+  .foot-grid { grid-template-columns: 1fr; gap: 32px; }
+}
+
+/* ---------- scroll animations ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.9s cubic-bezier(0.2, 0.6, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+.reveal.in { opacity: 1; transform: translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+  .reveal { opacity: 1; transform: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* ---------- print ---------- */
+@media print {
+  .atmosphere, .top-bar, .live-app { display: none; }
+  body { background: #fff; color: #111; }
+  .shell, section.page { padding: 20px 0; }
+  .prompt-card, .ref-card, .tree, .repro { break-inside: avoid; border-color: #ccc; background: #fff; color: #111; }
+  .quote { background: #f6f1e9; border-color: #b87a1f; color: #111; }
+  .hero h1, .section-title, .prompt-title, .learnings strong { color: #111; }
+  .hero h1 .accent, .section-title .accent, .stat-n .unit { color: #b87a1f !important; }
+  .hero { padding: 40px 0; }
+}
+
+/* =========================================================
+   LIVE APP — FlightScouter (compiled into this page)
+   ========================================================= */
+.live-app {
+  padding: 60px 0 20px;
+  position: relative;
+}
+.live-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px 7px 10px;
+  background: var(--accent-amber-soft);
+  border: 1px solid rgba(232, 164, 86, 0.35);
+  border-radius: 100px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-amber);
+  margin-bottom: 20px;
+}
+.live-banner .pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  position: relative;
+}
+.live-banner .pulse::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  opacity: 0.4;
+  animation: fs-pulse 1.8s ease-out infinite;
+}
+@keyframes fs-pulse {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(2); opacity: 0; }
+}
+.live-heading {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.1;
+  color: var(--ink-0);
+  letter-spacing: -0.022em;
+  margin: 0 0 14px;
+  max-width: 24ch;
+}
+.live-heading .accent { color: var(--accent-amber); }
+.live-intro {
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 60ch;
+  margin: 0 0 32px;
+}
+
+/* app frame */
+.fs-frame {
+  position: relative;
+  border: 1px solid var(--border-2);
+  border-radius: 20px;
+  overflow: hidden;
+  background: #0f1236;
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+.fs-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 0%, rgba(129, 90, 222, 0.5), transparent 60%),
+    radial-gradient(ellipse 60% 60% at 80% 100%, rgba(62, 52, 159, 0.5), transparent 65%),
+    linear-gradient(135deg, #1e2370 0%, #3a1c6e 50%, #2c1a5a 100%);
+  pointer-events: none;
+}
+.fs-chrome {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(15, 12, 40, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.fs-chrome .dots { display: flex; gap: 6px; }
+.fs-chrome .dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+.fs-chrome .dot.r { background: #ff5f57; }
+.fs-chrome .dot.y { background: #febc2e; }
+.fs-chrome .dot.g { background: #28c840; }
+.fs-chrome .url {
+  flex: 1;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.02em;
+}
+
+.fs-app {
+  position: relative;
+  padding: 44px 28px 48px;
+  color: #fff;
+  font-family: var(--sans);
+  min-height: 560px;
+}
+.fs-app h2 {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 34px;
+  text-align: center;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.fs-app .fs-tag {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  margin: 6px 0 28px;
+}
+.fs-inner {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* search form */
+.fs-form {
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.fs-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fs-switch {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border: 0;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+}
+.fs-switch.on { background: #9061f9; }
+.fs-switch .knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.2s;
+}
+.fs-switch.on .knob { left: 22px; }
+.fs-toggle-row span {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.fs-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 560px) {
+  .fs-grid2 { grid-template-columns: 1fr; }
+}
+.fs-field { display: flex; flex-direction: column; gap: 4px; position: relative; }
+.fs-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+.fs-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  color-scheme: dark;
+  width: 100%;
+}
+.fs-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+.fs-input:focus { border-color: #c084fc; }
+.fs-input.err { border-color: #f87171; }
+.fs-err {
+  font-size: 11px;
+  color: #f87171;
+  margin-top: 2px;
+}
+
+.fs-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(18, 10, 38, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  max-height: 240px;
+  overflow-y: auto;
+  box-shadow: 0 14px 40px -12px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.fs-dropdown .it {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  background: transparent;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: var(--sans);
+}
+.fs-dropdown .it:hover { background: rgba(255, 255, 255, 0.08); }
+.fs-dropdown .it .code {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: #c084fc;
+  font-size: 12px;
+  width: 36px;
+}
+.fs-dropdown .it .lbl { display: flex; flex-direction: column; }
+.fs-dropdown .it .lbl .city { font-size: 14px; }
+.fs-dropdown .it .lbl .sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+.fs-dropdown .empty {
+  padding: 12px 14px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+}
+
+.fs-btn {
+  background: #7c3aed;
+  color: #fff;
+  border: 0;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 8px;
+  font-family: var(--sans);
+}
+.fs-btn:hover:not(:disabled) { background: #8b47f0; }
+.fs-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.fs-btn .spin {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: fs-spin 0.8s linear infinite;
+  vertical-align: -2px;
+  margin-right: 8px;
+}
+@keyframes fs-spin { to { transform: rotate(360deg); } }
+
+/* error box */
+.fs-error {
+  margin-top: 20px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-radius: 12px;
+  color: #f87171;
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* filter bar */
+.fs-filterbar {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.fs-sel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: #fff;
+  font-size: 13px;
+  color-scheme: dark;
+  font-family: var(--sans);
+  cursor: pointer;
+}
+.fs-chip {
+  padding: 4px 12px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--sans);
+}
+.fs-chip.on {
+  background: rgba(124, 58, 237, 0.55);
+  border-color: #c084fc;
+  color: #fff;
+}
+
+/* results */
+.fs-results { margin-top: 22px; }
+.fs-results .count {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.fs-empty {
+  margin-top: 22px;
+  padding: 32px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+}
+.fs-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 16px;
+  transition: background 0.2s, transform 0.2s;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  margin-bottom: 10px;
+  animation: fs-in 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.fs-card:hover { background: rgba(255, 255, 255, 0.09); }
+@keyframes fs-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fs-card-row1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+.fs-al {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fs-al .al-code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #c084fc;
+  background: rgba(192, 132, 252, 0.12);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.fs-al .al-name { font-size: 16px; font-weight: 600; }
+.fs-price { font-size: 22px; font-weight: 700; }
+.fs-times {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 6px;
+}
+.fs-times .arr { color: rgba(255, 255, 255, 0.4); }
+.fs-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+.fs-meta .stops-d { color: #4ade80; font-weight: 500; }
+.fs-meta .stops-s { color: #facc15; font-weight: 500; }
+
+.fs-skel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 10px;
+  backdrop-filter: blur(10px);
+}
+.fs-skel .bar {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  animation: fs-pulse-bg 1.4s ease-in-out infinite;
+}
+@keyframes fs-pulse-bg {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* weather panel */
+.fs-weather {
+  margin-top: 24px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+}
+.fs-weather-h {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 14px;
+}
+.fs-weather-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.fs-weather-row::-webkit-scrollbar { display: none; }
+.fs-day {
+  min-width: 100px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: center;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+.fs-day .dn { font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.75); }
+.fs-day .dd { font-size: 11px; color: rgba(255, 255, 255, 0.5); }
+.fs-day .ic { font-size: 28px; margin: 4px 0 2px; }
+.fs-day .tm { font-size: 14px; font-weight: 600; }
+.fs-day .tm .lo { color: rgba(255, 255, 255, 0.5); font-weight: 400; }
+.fs-day .ds {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.25;
+}
+
+@media (max-width: 560px) {
+  .fs-app { padding: 32px 18px 36px; }
+  .fs-app h2 { font-size: 26px; }
+}
+</style>
+</head>
+<body>
+<div class="atmosphere" aria-hidden="true"></div>
+
+<header class="top-bar">
+  <div class="top-bar-inner">
+    <a href="#top" class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>FlightScouter / Walkthrough</span>
+    </a>
+    <nav class="top-links" aria-label="Điều hướng chính">
+      <a href="#project">Dự án</a>
+      <a href="#workflow">Quy trình</a>
+      <a href="#prompts">Prompts</a>
+      <a href="#learnings">Bài học</a>
+      <a href="#reproduce">Tái hiện</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============= LIVE APP ============= -->
+<div class="shell">
+<section class="live-app reveal">
+  <h2 class="live-heading">FlightScouter, <span class="accent">bản compile tương tác.</span></h2>
+  <p class="live-intro">
+    Đây chính là app đã được xây dựng trong phiên — compile từ React + Vite sang vanilla JS
+    để chạy inline ngay trong trang này. Chọn điểm đi, điểm đến, ngày — kết quả sinh
+    ngay tại trình duyệt, dự báo thời tiết gọi thật từ Open-Meteo.
+  </p>
+
+  <div class="fs-frame">
+    <div class="fs-chrome">
+      <div class="dots">
+        <span class="dot r"></span>
+        <span class="dot y"></span>
+        <span class="dot g"></span>
+      </div>
+      <div class="url">flightscouter.local</div>
+      <div style="width:48px"></div>
+    </div>
+
+    <div class="fs-app" id="fs-root">
+      <h2>FlightScouter</h2>
+      <p class="fs-tag">Find your next flight</p>
+
+      <div class="fs-inner">
+        <!-- SEARCH FORM -->
+        <form class="fs-form" id="fs-form" novalidate>
+          <div class="fs-toggle-row">
+            <button type="button" class="fs-switch on" id="fs-roundtrip" role="switch" aria-checked="true">
+              <span class="knob"></span>
+            </button>
+            <span>Round trip</span>
+          </div>
+
+          <div class="fs-grid2">
+            <div class="fs-field" data-ap="from">
+              <label class="fs-label" for="fs-from">From</label>
+              <input type="text" id="fs-from" class="fs-input" placeholder="Ho Chi Minh City" autocomplete="off" />
+              <div class="fs-err" id="fs-err-from" hidden></div>
+            </div>
+            <div class="fs-field" data-ap="to">
+              <label class="fs-label" for="fs-to">To</label>
+              <input type="text" id="fs-to" class="fs-input" placeholder="Tokyo" autocomplete="off" />
+              <div class="fs-err" id="fs-err-to" hidden></div>
+            </div>
+          </div>
+
+          <div class="fs-grid2">
+            <div class="fs-field">
+              <label class="fs-label" for="fs-depart">Depart date</label>
+              <input type="date" id="fs-depart" class="fs-input" />
+              <div class="fs-err" id="fs-err-depart" hidden></div>
+            </div>
+            <div class="fs-field" id="fs-return-field">
+              <label class="fs-label" for="fs-return">Return date</label>
+              <input type="date" id="fs-return" class="fs-input" />
+              <div class="fs-err" id="fs-err-return" hidden></div>
+            </div>
+          </div>
+
+          <button type="submit" class="fs-btn" id="fs-submit">Search Flights</button>
+        </form>
+
+        <div id="fs-error-box"></div>
+        <div id="fs-filterbar"></div>
+        <div id="fs-results"></div>
+        <div id="fs-weather"></div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============= HERO ============= -->
+<div class="shell">
+<section class="hero reveal">
+  <div class="hero-label">Hướng dẫn prompting — tài liệu training nội bộ</div>
+  <h1>FlightScouter, <span class="accent">xây xong trong một phiên hội thoại.</span></h1>
+  <p class="hero-sub">
+    Tài liệu này ghi lại đúng quá trình đã tạo ra <strong>FlightScouter</strong> —
+    một PoC React tìm kiếm chuyến bay kèm filter, sort, và dự báo thời tiết thật tại
+    điểm đến — từ ý tưởng mơ hồ ban đầu đến app chạy được. Mọi prompt đều được ghi lại để
+    mọi người có thể hình dung được sự tương tác với AI.
+  </p>
+
+  <div class="stats" role="list">
+    <div class="stat" role="listitem">
+      <div class="stat-n"><span class="unit">~</span>45<span class="unit">ph</span></div>
+      <div class="stat-l">tổng thời gian</div>
+    </div>
+    <div class="stat" role="listitem">
+      <div class="stat-n">06</div>
+      <div class="stat-l">phase triển khai</div>
+    </div>
+    <div class="stat" role="listitem">
+      <div class="stat-n">15<span class="unit">+</span></div>
+      <div class="stat-l">prompts từ user</div>
+    </div>
+    <div class="stat" role="listitem">
+      <div class="stat-n">03</div>
+      <div class="stat-l">loại subagent</div>
+    </div>
+    <div class="stat" role="listitem">
+      <div class="stat-n">08<span class="unit">+</span></div>
+      <div class="stat-l">skill kích hoạt</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============= SECTION 1 — PROJECT ============= -->
+<div class="shell">
+<section id="project" class="page reveal">
+  <header class="section-head">
+    <div class="section-num">§ 01 — Bài toán</div>
+    <h2 class="section-title">PoC tìm chuyến bay <span class="accent">nhỏ gọn.</span></h2>
+    <p class="section-lead">
+      Mục tiêu không phải xây một website tìm chuyến bay hoàn chỉnh. Mục tiêu là chứng minh
+      AI có thể đảm nhiệm phần lớn khâu phân tích yêu cầu và code, đủ nhanh để demo
+      trực tiếp, đủ thấu đáo để hình dung hoá được ý tưởng.
+    </p>
+  </header>
+
+  <div class="facts">
+    <div class="fact-row">
+      <div class="fact-k">Mục đích</div>
+      <div class="fact-v">Tìm kiếm chuyến bay có filter + sort, kèm dự báo thời tiết tại điểm đến trong khoảng ngày đã chọn.</div>
+    </div>
+    <div class="fact-row">
+      <div class="fact-k">Khán giả</div>
+      <div class="fact-v">Business / Management — xem demo trực tiếp 30 phút. Tác động trực quan quan trọng hơn độ sâu kỹ thuật.</div>
+    </div>
+    <div class="fact-row">
+      <div class="fact-k">Stack</div>
+      <div class="fact-v">
+        <span class="pill">React 19</span>
+        <span class="pill">Vite</span>
+        <span class="pill">TypeScript</span>
+        <span class="pill">Tailwind CSS v4</span>
+        <span class="pill">Axios</span>
+      </div>
+    </div>
+    <div class="fact-row">
+      <div class="fact-k">Dữ liệu</div>
+      <div class="fact-v">
+        <span class="pill accent">Chuyến bay mock — seeded RNG</span>
+        <span class="pill accent">Open-Meteo — thời tiết thật, không cần key</span>
+      </div>
+    </div>
+    <div class="fact-row">
+      <div class="fact-k">Giao diện</div>
+      <div class="fact-v">SPA, glassmorphism trên nền gradient indigo-tím, autocomplete sân bay, filter chip động, dải thời tiết cuộn ngang.</div>
+    </div>
+    <div class="fact-row">
+      <div class="fact-k">Kết quả</div>
+      <div class="fact-v">PoC chạy được, build TypeScript sạch, 3 fix từ code review đã áp dụng, không cần API key để chạy.</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============= SECTION 2 — WORKFLOW ============= -->
+<div class="shell">
+<section id="workflow" class="page reveal">
+  <header class="section-head">
+    <div class="section-num">§ 02 — Quy trình</div>
+    <h2 class="section-title">Sáu bước, <span class="accent">đúng thứ tự.</span></h2>
+    <p class="section-lead">
+      Mỗi bước mở khoá bước tiếp theo. Phần research chạy song song vì các truy vấn
+      độc lập; phần implement chạy tuần tự vì mọi phase đều sửa
+      <code style="font-family:var(--mono);font-size:13px;color:var(--accent-amber)">App.tsx</code>.
+      Pivot ở bước sáu được xử lý inline — không cần quay lại planning.
+    </p>
+  </header>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="num">01 / Khám phá</div>
+      <div class="title">Brainstorm</div>
+      <div class="desc">Scout project, làm rõ mục tiêu, khán giả, ràng buộc qua AskUserQuestion.</div>
+      <span class="arrow">›</span>
+    </div>
+    <div class="flow-step">
+      <div class="num">02 / Thu thập</div>
+      <div class="title">Research</div>
+      <div class="desc">Hai researcher subagent chạy nền song song: flight APIs + weather APIs.</div>
+      <span class="arrow">›</span>
+    </div>
+    <div class="flow-step">
+      <div class="num">03 / Quyết định</div>
+      <div class="title">Plan</div>
+      <div class="desc">Brainstorm report + plan 6 phase được viết vào thư mục dự án.</div>
+      <span class="arrow">›</span>
+    </div>
+    <div class="flow-step">
+      <div class="num">04 / Xây dựng</div>
+      <div class="title">Implement</div>
+      <div class="desc">fullstack-developer subagent, mỗi lần một phase, build check giữa các phase.</div>
+      <span class="arrow">›</span>
+    </div>
+    <div class="flow-step">
+      <div class="num">05 / Kiểm tra</div>
+      <div class="title">Review</div>
+      <div class="desc">code-reviewer subagent báo ba lỗi; main agent fix trực tiếp.</div>
+      <span class="arrow">›</span>
+    </div>
+    <div class="flow-step">
+      <div class="num">06 / Pivot</div>
+      <div class="title">Refactor</div>
+      <div class="desc">User bỏ API live; chuyển sang mock generator + autocomplete sân bay tại chỗ.</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============= SECTION 3 — PROMPTS ============= -->
+<div class="shell">
+<section id="prompts" class="page reveal">
+  <header class="section-head">
+    <div class="section-num">§ 03 — Các prompts</div>
+    <h2 class="section-title">Từng tin nhắn, <span class="accent">theo thứ tự đã gửi.</span></h2>
+    <p class="section-lead">
+      Prompt của user được giữ nguyên văn — kể cả lỗi chính tả. Giá trị nằm ở mức độ
+      ngắn gọn và định hướng của từng tin nhắn, không phải ở độ chau chuốt.
+    </p>
+  </header>
+
+  <div class="prompts">
+
+    <!-- P1 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P1</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:00</span>
+            <span class="dot"></span>
+            <span>Mở đầu hội thoại</span>
+            <span class="dot"></span>
+            <span>skill · /brainstorm</span>
+          </div>
+          <h3 class="prompt-title">Nêu mục tiêu, không nêu công nghệ.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+        <blockquote class="quote">Tôi muốn làm một website nho nhỏ, mục tiêu là list ra các chuyến bay và giá thành dựa vào ngày đi, ngày về, điểm đi, điểm đến và option khứ hồi. Mục tiêu của dự án này là để demonstrate sức mạnh của AI trong việc tự động hoá phần tìm hiểu yêu cầu và coding, và tôi muốn có thể làm một cái live demo coding nho nhỏ dựa vào tài liệu yêu cầu mà tôi với bạn sẽ tạo ngay bây giờ. Cùng tìm hiểu nào!</blockquote>
+
+        <div class="meta-grid">
+          <div class="meta-k">Ý định</div>
+          <div class="meta-v">Định hình dự án bằng <strong>lý do tồn tại</strong> — một live demo chứng minh AI-driven development — trước khi đả động đến stack hay danh sách tính năng.</div>
+          <div class="meta-k">Skill</div>
+          <div class="meta-v"><code>/brainstorm</code> · Solution Brainstormer: áp dụng YAGNI/KISS/DRY, bắt buộc hỏi làm rõ trước khi code.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v">AI scout workspace, sau đó hỏi bốn câu trắc nghiệm (nguồn dữ liệu, stack, thời lượng demo, khán giả) qua <code>AskUserQuestion</code>.</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">Mở đầu bằng <strong>tại sao</strong>, không phải <strong>cái gì</strong>. Cho AI biết lý do kinh doanh thì nó sẽ đề xuất scope phù hợp, thay vì ngoan ngoãn implement cái bạn gõ ra đầu tiên.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P2 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P2</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:02</span>
+            <span class="dot"></span>
+            <span>Trả lời bốn câu hỏi</span>
+            <span class="dot"></span>
+            <span>tool · AskUserQuestion</span>
+          </div>
+          <h3 class="prompt-title">Ràng buộc giá trị hơn tính năng.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+
+        <div class="answer-block">
+          <div class="answer-q">Nguồn dữ liệu</div>
+          <div class="answer-a">Gọi API thật, có option API nào khác ko, ví dụ như từ OpenAPI hay Google Flights. Tìm hiểu giúp tôi xem có các free option nào nha.</div>
+        </div>
+        <div class="answer-block">
+          <div class="answer-q">Tech Stack</div>
+          <div class="answer-a">React + Vite</div>
+        </div>
+        <div class="answer-block">
+          <div class="answer-q">Thời lượng demo</div>
+          <div class="answer-a">30 phút tối đa, có search + results + filter/sort. UI bắt mắt và giữ đơn giản. Có hiển thị thời tiết trong khoảng thời gian mà người dùng chọn tại điểm đến nữa.</div>
+        </div>
+        <div class="answer-block">
+          <div class="answer-q">Khán giả</div>
+          <div class="answer-a">Business / Management</div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-k">Ý định</div>
+          <div class="meta-v">Khoá scope bằng cách gắn ràng buộc định lượng và tính chất vào từng lựa chọn.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v">AI lúc này đã có: ưu tiên API thật, stack tối giản, ngân sách thời gian 30 phút, một yêu cầu ẩn (panel thời tiết), và tín hiệu về khán giả (visual impact &gt; chiều sâu kỹ thuật).</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">Câu trả lời ngắn vẫn hiệu quả <strong>nếu</strong> kèm ràng buộc. "30 phút tối đa", "bắt mắt và giữ đơn giản", cộng với một yêu cầu bất ngờ (thời tiết) — ba mảnh vụn này truyền tải nhiều thông tin thiết kế hơn ba đoạn văn.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P3 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P3</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:03</span>
+            <span class="dot"></span>
+            <span>Không có prompt — agent tự khởi động</span>
+            <span class="dot"></span>
+            <span>agent · researcher × 2</span>
+          </div>
+          <h3 class="prompt-title">Research song song, nằm ngoài main context.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+        <p style="margin:0 0 16px;color:var(--ink-2);">
+          Không cần user yêu cầu, main agent dispatch hai subagent <strong>researcher</strong>
+          chạy nền — một cho free flight-search APIs, một cho free weather APIs. Hai truy
+          vấn hoàn toàn độc lập, nên chạy song song tiết kiệm khoảng 40 giây wall time
+          và giữ các bảng so sánh dài ra khỏi main context window.
+        </p>
+
+        <div class="meta-grid">
+          <div class="meta-k">Agent</div>
+          <div class="meta-v"><code>researcher</code> · thu thập thông tin kỹ thuật, tạo báo cáo so sánh ngắn gọn, trích nguồn đầy đủ.</div>
+          <div class="meta-k">Dispatch</div>
+          <div class="meta-v">(a) Free flight APIs — Kiwi Tequila, Amadeus, Skyscanner, AviationStack, FlightAPI.io, Google Flights. (b) Free weather APIs — Open-Meteo, Visual Crossing, Tomorrow.io, OpenWeatherMap, WeatherAPI.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v">Hai báo cáo được lưu trong <code>plans/reports/</code>. Người thắng: <strong>Kiwi Tequila</strong> cho chuyến bay, <strong>Open-Meteo</strong> cho thời tiết (không cần API key).</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">Khi hai câu hỏi không phụ thuộc vào nhau, dispatch song song. Main thread tiếp tục hội thoại; kết quả về qua notification. Đây là cách tiết kiệm wall time lớn nhất trong live demo.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P4 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P4</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:05</span>
+            <span class="dot"></span>
+            <span>Quyết định thiết kế</span>
+            <span class="dot"></span>
+            <span>tool · AskUserQuestion + preview</span>
+          </div>
+          <h3 class="prompt-title">Cho AI show ba option trực tiếp trên màn hình.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+
+        <div class="answer-block">
+          <div class="answer-q">Phong cách UI (chọn từ ba ASCII mockup)</div>
+          <div class="answer-a">Modern glassmorphism — background gradient, glass cards, blur effects.</div>
+        </div>
+        <div class="answer-block">
+          <div class="answer-q">Filter</div>
+          <div class="answer-a">Chỉ Price sort + Airline filter. (Áp dụng KISS — bỏ cabin class, bỏ duration band.)</div>
+        </div>
+        <div class="answer-block">
+          <div class="answer-q">Ngôn ngữ app</div>
+          <div class="answer-a">UI tiếng Anh.</div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-k">Ý định</div>
+          <div class="meta-v">Chốt nhanh ba quyết định thiết kế còn lại mà không cần mô tả UI bằng lời.</div>
+          <div class="meta-k">Công cụ</div>
+          <div class="meta-v"><code>AskUserQuestion</code> hỗ trợ khối <strong>preview</strong> đặt cạnh — mỗi option đính kèm một ASCII mockup inline của layout.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v">Glassmorphism được chọn trong vài giây thay vì cả đoạn mô tả dài, và AI có thể show mockup ngay cạnh nhãn option.</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">Chọn thiết kế nhanh hơn khi có <strong>bất kỳ</strong> hình ảnh nào — kể cả ASCII. Nếu model có thể render preview ngay trong câu hỏi, dùng nó. Mô tả layout bằng lời thường thiếu chi tiết.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P5 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P5</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:07</span>
+            <span class="dot"></span>
+            <span>Đổi hướng</span>
+          </div>
+          <h3 class="prompt-title">Push-back ngắn thắng giải thích dài.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+        <blockquote class="quote">Cần chỉnh sửa</blockquote>
+        <blockquote class="quote">À thôi, xuất cho tôi cái plan đi để tôi review. Ném vào folder FlightScouter nha</blockquote>
+
+        <div class="meta-grid">
+          <div class="meta-k">Ý định</div>
+          <div class="meta-v">Thể hiện do dự, rồi quyết định dứt khoát đi tiếp thay vì cứ xoay quanh.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v"><code>brainstorm-report.md</code> + <code>plan.md</code> chi tiết 6 phase, mỗi phase có step, danh sách file, tiêu chí hoàn thành, dependency.</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">Quyền thay đổi ý định giữa chừng bị đánh giá thấp. Hai từ "<strong>À thôi</strong>" không tốn gì; đợi đến khi AI viết code bạn không dùng mới tốn.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P6 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P6</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:08</span>
+            <span class="dot"></span>
+            <span>Audit kế hoạch</span>
+          </div>
+          <h3 class="prompt-title">Bắt AI mô tả workflow của chính nó.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+        <blockquote class="quote">Bạn nói cho tôi workflow implement của bạn sẽ thế nào?</blockquote>
+
+        <div class="meta-grid">
+          <div class="meta-k">Ý định</div>
+          <div class="meta-v">Bắt lỗi trong kế hoạch khi sửa còn rẻ.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v">AI giải thích: 6 phase tuần tự (mỗi phase là một dispatch <code>fullstack-developer</code>), lý do tuần tự chứ không song song (mọi phase đều sửa <code>App.tsx</code>), build check giữa phase, code review cuối cùng.</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">Một đoạn "bạn sẽ làm gì tiếp theo" của AI sẽ phơi bày các hiểu lầm mà nếu không sẽ biến thành merge conflict một tiếng sau.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P7 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P7</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:09</span>
+            <span class="dot"></span>
+            <span>Audit công cụ</span>
+          </div>
+          <h3 class="prompt-title">Biết trước agent và skill nào sẽ chạy.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+        <blockquote class="quote">Bạn sẽ chạy các con agent gì và sử dụng skill gì?</blockquote>
+
+        <div class="meta-grid">
+          <div class="meta-k">Ý định</div>
+          <div class="meta-v">Xem trước danh sách công cụ. Cái nào bất ngờ là cơ hội để veto.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v">AI liệt kê <code>fullstack-developer</code>, <code>code-reviewer</code>, <code>code-simplifier</code>, cùng các skill <code>cook</code>, <code>fix</code>, <code>simplify</code>, <code>docs-seeker</code>, <code>react-best-practices</code>, kèm điều kiện kích hoạt từng cái.</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">Minh bạch tạo khả năng kiểm soát. Danh sách agent và skill AI định dùng là bản nháp thứ hai của kế hoạch — review nó giống như bạn review đoạn văn.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P8 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P8</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:10</span>
+            <span class="dot"></span>
+            <span>Thực thi</span>
+            <span class="dot"></span>
+            <span>skill · /cook</span>
+          </div>
+          <h3 class="prompt-title">Hai chữ là đủ nếu context đã rõ.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+        <blockquote class="quote">Chạy đi</blockquote>
+
+        <div class="meta-grid">
+          <div class="meta-k">Skill</div>
+          <div class="meta-v"><code>/cook</code> · smart feature implementation — chọn <strong>code-mode</strong> vì <code>plan.md</code> đã có, nên bỏ qua bước research.</div>
+          <div class="meta-k">Công việc</div>
+          <div class="meta-v">
+            Phase 1 — Scaffold Vite (làm trong thread).<br />
+            Phase 2 — Component SearchForm (<code>fullstack-developer</code>).<br />
+            Phase 3 — Flight API service + Results (<code>fullstack-developer</code>).<br />
+            Phase 4 — Filter/Sort (làm trong thread, scope nhỏ).<br />
+            Phase 5 — Weather panel (<code>fullstack-developer</code>).<br />
+            Phase 6 — Glassmorphism polish + font Inter + animation (trong thread).
+          </div>
+          <div class="meta-k">Verify</div>
+          <div class="meta-v"><code>npx tsc --noEmit</code> + <code>npm run build</code> giữa mỗi phase. Bắt được một lỗi type-import do <code>verbatimModuleSyntax</code> và fix trước khi đi tiếp.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v">SPA chạy: build sạch, theme glassmorphism, skeleton loader, animation fade-in cho danh sách, pipeline city → weather hoạt động.</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">Khi đã đầu tư plan và approval rõ ràng từ trước, prompt thực thi có thể gần như trống. "<strong>Chạy đi</strong>" hoạt động được vì <code>plan.md</code>, danh sách agent, và tiêu chí hoàn thành đã được chốt trước đó.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P9 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P9</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:30</span>
+            <span class="dot"></span>
+            <span>Câu hỏi ngoài lề</span>
+          </div>
+          <h3 class="prompt-title">Hỏi về những phần AI không làm.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+        <blockquote class="quote">Tôi lấy API key của Kiwi ở đâu vậy?</blockquote>
+
+        <div class="meta-grid">
+          <div class="meta-k">Ý định</div>
+          <div class="meta-v">Nhớ rằng đăng ký dịch vụ bên ngoài vẫn là bước của con người.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v">AI cung cấp URL đăng ký, quy trình My Solution, và entry <code>.env</code> chính xác.</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">Đừng mặc định AI đã lo phần onboarding bên thứ ba chỉ vì nó đã viết đoạn integration. Hỏi thẳng các bước con người — đó là phần hay làm hỏng demo.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P10 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P10</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:31</span>
+            <span class="dot"></span>
+            <span>Blocker</span>
+            <span class="dot"></span>
+            <span>agent · researcher</span>
+          </div>
+          <h3 class="prompt-title">Khi có gì đó hỏng, báo thẳng, đừng chẩn đoán.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+        <blockquote class="quote">không vào được nha...</blockquote>
+
+        <div class="meta-grid">
+          <div class="meta-k">Ý định</div>
+          <div class="meta-v">Báo blocker mà không đề xuất giải pháp. Để AI tự search không gian nghiệm.</div>
+          <div class="meta-k">Phản ứng của AI</div>
+          <div class="meta-v">Dispatch <code>researcher</code> agent để kiểm tra độ sẵn sàng của API, sau đó trả về ba option: retry Kiwi, chuyển sang Amadeus, hoặc fallback mock data.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v">Không bế tắc. AI biến blocker thành câu hỏi lựa chọn.</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">Không cần chẩn đoán trước khi báo. "X không chạy" + không phân tích thường nhanh hơn nửa-chẩn-đoán, vì AI có thể verify, so sánh phương án, rồi trình bày mà không bị gán ý.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P11 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P11</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:32</span>
+            <span class="dot"></span>
+            <span>Pivot giữa build</span>
+            <span class="dot"></span>
+            <span>agent · researcher</span>
+          </div>
+          <h3 class="prompt-title">Nói <span class="accent">cái gì</span>, để <span class="accent">làm thế nào</span> cho AI.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+        <blockquote class="quote">Sử dụng mock data đi. Dữ liệu các địa điểm sân bay có thể lấy từ API nào mở không. Khi chọn địa điểm + ngày đi/về rồi, có thể generate random các chuyến bay có thể có cũng như giờ đi/đến. Weather vẫn lấy từ API nha</blockquote>
+
+        <div class="meta-grid">
+          <div class="meta-k">Ý định</div>
+          <div class="meta-v">Pivot chiến lược dữ liệu mà không re-plan. Giữ weather thật vì đã chạy được.</div>
+          <div class="meta-k">Research</div>
+          <div class="meta-v">Một dispatch <code>researcher</code> ngắn xác nhận <strong>static JSON</strong> curate sẵn (ví dụ <code>mwgg/Airports</code>) là phương án tốt nhất cho demo — không fetch, không rate limit.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v">Main agent xây: dataset 50 sân bay (<code>src/data/airports.ts</code>), component autocomplete <code>AirportSelect</code>, và flight generator <strong>seeded</strong> trả về kết quả giống nhau với cùng input — quan trọng cho live demo.</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">Pivot giữa build rẻ nếu mô tả ở đúng độ cao. "<strong>Dùng mock data, giữ weather thật</strong>" là lệnh CÁI GÌ; các lựa chọn cài đặt (seeded RNG, ước lượng thời gian theo khoảng cách) vẫn thuộc về AI.</div>
+        </div>
+      </div>
+    </article>
+
+    <!-- P12 -->
+    <article class="prompt-card">
+      <div class="prompt-head">
+        <div class="prompt-ord">P12</div>
+        <div class="prompt-meta">
+          <div class="prompt-tag">
+            <span class="time">00:44</span>
+            <span class="dot"></span>
+            <span>Ghi lại phiên làm việc</span>
+            <span class="dot"></span>
+            <span>skill · /frontend-design</span>
+          </div>
+          <h3 class="prompt-title">Cho AI tự viết tài liệu training cho chính nó.</h3>
+        </div>
+      </div>
+      <div class="prompt-body">
+        <blockquote class="quote">Tôi đang muốn ghi lại rõ từng bước tôi đã nói chuyện với bạn trong cuộc trò chuyện này. … xuất 1 file HTML static, tập trung vào từng prompt tôi viết, skill đã sử dụng (kèm mục đích skill đó), mục đích là gì, kết quả là gì… Sử dụng skill /ck:frontend-design để làm file HTML nha</blockquote>
+
+        <div class="meta-grid">
+          <div class="meta-k">Ý định</div>
+          <div class="meta-v">Biến một phiên làm việc đơn lẻ thành artifact có thể tái hiện, mà không cần rời khỏi công cụ.</div>
+          <div class="meta-k">Skill</div>
+          <div class="meta-v"><code>/frontend-design</code> · web interface production-grade từ spec — chọn vì deliverable là một trang training standalone, không phải báo cáo markdown.</div>
+          <div class="meta-k">Kết quả</div>
+          <div class="meta-v">Tài liệu này.</div>
+        </div>
+
+        <div class="takeaway">
+          <div class="takeaway-label">Bài học</div>
+          <div class="takeaway-text">AI đã có context đầy đủ về những gì vừa xảy ra. Yêu cầu nó tạo artifact giảng dạy ngay trong cùng phiên rẻ hơn hẳn viết ghi chú sau — và chi tiết còn tươi mới.</div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+</div>
+
+<!-- ============= SECTION 4 — SKILLS REF ============= -->
+<div class="shell">
+<section class="page reveal">
+  <header class="section-head">
+    <div class="section-num">§ 04 — Skills</div>
+    <h2 class="section-title">Danh sách công cụ, <span class="accent">đặt tên rõ ràng.</span></h2>
+    <p class="section-lead">
+      Skill là những hợp đồng markdown nhỏ thay đổi cách main agent hành xử. Bản thân
+      skill không spawn subagent; chúng định hướng main thread.
+    </p>
+  </header>
+
+  <div class="ref-grid">
+    <div class="ref-card">
+      <div class="ref-name">/brainstorm <span class="kind">skill</span></div>
+      <div class="ref-desc">Brainstorm giải pháp theo YAGNI/KISS/DRY. Bắt buộc có design-before-code gate và dùng <code>AskUserQuestion</code> để làm rõ scope.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">/cook <span class="kind">skill</span></div>
+      <div class="ref-desc">Smart feature implementation. Tự phát hiện <strong>code-mode</strong> khi có plan file, ngược lại chạy research → plan → implement → test → review.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">/frontend-design <span class="kind">skill</span></div>
+      <div class="ref-desc">Tạo web interface production-grade. Kèm quy tắc anti-slop (tránh Inter, tránh AI-purple gradient) và nghi thức design-thinking.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">AskUserQuestion <span class="kind">tool</span></div>
+      <div class="ref-desc">Input multiple-choice có cấu trúc, kèm preview inline. Tối đa bốn câu mỗi lần gọi; một option "Other" mở sẵn.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">TodoWrite <span class="kind">tool</span></div>
+      <div class="ref-desc">Task list phạm vi session. Luôn đồng bộ để hiển thị tiến độ và báo phase nào đang chạy.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">react-best-practices <span class="kind">skill</span></div>
+      <div class="ref-desc">Hướng dẫn performance + pattern cho React/Next.js. Tham khảo khi viết component Suspense-aware và effect cleanup.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">fix <span class="kind">skill</span></div>
+      <div class="ref-desc">Fix bug theo root-cause-first. Giữ sẵn cho lỗi compile/runtime giữa các phase.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">simplify <span class="kind">skill</span></div>
+      <div class="ref-desc">Review các thay đổi gần đây để tái sử dụng và dễ đọc. Giữ sẵn như lớp post-implementation; phiên này chưa cần tới.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">docs-seeker <span class="kind">skill</span></div>
+      <div class="ref-desc">Truy vấn context7 / llms.txt để lấy doc library mới nhất. Hữu ích cho Tailwind v4 quirks và endpoint Open-Meteo.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">preview <span class="kind">skill</span></div>
+      <div class="ref-desc">Sinh visual explanation và HTML artifact. Surface thay thế cho <code>frontend-design</code> khi cần diagram nhanh.</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============= SECTION 5 — AGENTS REF ============= -->
+<div class="shell">
+<section class="page reveal">
+  <header class="section-head">
+    <div class="section-num">§ 05 — Subagents</div>
+    <h2 class="section-title">Context window <span class="accent">đi thuê.</span></h2>
+    <p class="section-lead">
+      Mỗi subagent khởi đầu với context 200k tươi và trả về đúng một reply. Chúng giữ
+      các artifact cồng kềnh — kết quả search, bảng so sánh, diff dài — ra khỏi main thread.
+    </p>
+  </header>
+
+  <div class="ref-grid">
+    <div class="ref-card">
+      <div class="ref-name">researcher <span class="kind">subagent</span></div>
+      <div class="ref-desc">Research kỹ thuật đa nguồn có trích dẫn. Dùng ba lần: flight APIs, weather APIs, và giữa chừng check xem Kiwi còn nhận đăng ký không.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">fullstack-developer <span class="kind">subagent</span></div>
+      <div class="ref-desc">Thực thi các phase triển khai với tiêu chí hoàn thành chặt. Đảm nhiệm phase 2, 3, 5 — các edit lớn nhất. File ownership tách biệt tránh xung đột.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">code-reviewer <span class="kind">subagent</span></div>
+      <div class="ref-desc">Code review adversarial kèm red-team analysis. Phát hiện <code>.env</code> chưa gitignore, thiếu null guard trong weather mapping, và type <code>SearchParams</code> bị duplicate.</div>
+    </div>
+    <div class="ref-card">
+      <div class="ref-name">Explore <span class="kind">subagent</span></div>
+      <div class="ref-desc">Codebase scouting nhanh. Dùng một lần đầu <code>/brainstorm</code> để xác nhận workspace đủ trống để bắt đầu mới.</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============= SECTION 6 — LEARNINGS ============= -->
+<div class="shell">
+<section id="learnings" class="page reveal">
+  <header class="section-head">
+    <div class="section-num">§ 06 — Bài học</div>
+    <h2 class="section-title">Mười <span class="accent">thói quen nhỏ</span> khiến phiên này ngắn lại.</h2>
+    <p class="section-lead">
+      Không có gì cao siêu. Cộng lại: một phiên lẽ ra hai tiếng rút xuống dưới một tiếng.
+    </p>
+  </header>
+
+  <ol class="learnings">
+    <li>
+      <strong>Mở đầu bằng TẠI SAO và MỤC TIÊU, không phải chi tiết kỹ thuật.</strong>
+      <p>Prompt đầu tiên nêu demo và khán giả trước khi nêu stack. AI đề xuất scope phù hợp thay vì ngoan ngoãn wire một framework bạn sẽ hối tiếc sau.</p>
+    </li>
+    <li>
+      <strong>Câu trả lời ngắn kèm ràng buộc &gt; câu trả lời dài.</strong>
+      <p>"30 phút tối đa", "bắt mắt và giữ đơn giản", "thời tiết tại điểm đến" — ba mảnh vụn này truyền tải nhiều thông tin thiết kế hơn một trang văn bản.</p>
+    </li>
+    <li>
+      <strong>Preview đánh bại mô tả cho các quyết định layout.</strong>
+      <p><code>AskUserQuestion</code> kèm ASCII mockup giúp user chọn glassmorphism trong vài giây. Mô tả ba UI bằng lời tốn gấp mười lần và vẫn thiếu chi tiết.</p>
+    </li>
+    <li>
+      <strong>Song song mọi thứ độc lập.</strong>
+      <p>Research flight API và research weather API không giao nhau, nên chạy song song nền. Tiết kiệm ~40 giây wall time và hai bảng so sánh không lọt vào main context.</p>
+    </li>
+    <li>
+      <strong>Tuần tự mọi thứ sửa cùng một file.</strong>
+      <p>Mọi phase của FlightScouter đều đụng <code>App.tsx</code>. Chạy song song sẽ đảm bảo có merge conflict. Dispatch tuần tự kèm build check giữa các phase nhanh hơn về tổng thể.</p>
+    </li>
+    <li>
+      <strong>Verify sau từng phase.</strong>
+      <p><code>npx tsc --noEmit</code> + <code>npm run build</code> giữa các phase bắt được một lỗi type-import <code>verbatimModuleSyntax</code> ngay lập tức — một phút fix bây giờ so với lỗi nhân lên sau này.</p>
+    </li>
+    <li>
+      <strong>Audit kế hoạch trước khi duyệt.</strong>
+      <p>Hỏi "workflow của bạn là gì?" phơi bày lý do sequencing. Hỏi "bạn dùng agent gì?" phơi bày danh sách công cụ. Veto rẻ xảy ra trước khi code được viết.</p>
+    </li>
+    <li>
+      <strong>Đừng ngại đổi hướng.</strong>
+      <p>Push-back hai chữ ("<strong>À thôi</strong>", "<strong>Chạy đi</strong>") không tốn gì mà chuyển hướng tin cậy. Im lặng hay lịch sự tốn nhiều hơn.</p>
+    </li>
+    <li>
+      <strong>Báo blocker mà không chẩn đoán.</strong>
+      <p>"không vào được nha..." là đủ. AI verify API, so sánh phương án, đưa ra ba đường đi. Tự chẩn đoán hộ AI thường làm hẹp không gian nghiệm của nó.</p>
+    </li>
+    <li>
+      <strong>Pivot rẻ ở đúng độ cao.</strong>
+      <p>"Dùng mock data, giữ weather thật" là lệnh CÁI GÌ. Chi tiết cài đặt (seeded RNG, ước lượng thời gian theo khoảng cách, danh sách sân bay curated) vẫn thuộc về AI — đúng chỗ của chúng.</p>
+    </li>
+  </ol>
+</section>
+</div>
+
+<!-- ============= SECTION 7 — TIMELINE ============= -->
+<div class="shell">
+<section class="page reveal">
+  <header class="section-head">
+    <div class="section-num">§ 07 — Timeline</div>
+    <h2 class="section-title">Khoảng <span class="accent">45 phút,</span> từ brief đến build.</h2>
+    <p class="section-lead">
+      Timestamp xấp xỉ. Phase research chồng lên phase clarify vì hai background agent
+      chạy song song với prompt kế tiếp.
+    </p>
+  </header>
+
+  <div class="timeline">
+    <div class="t-item milestone">
+      <div class="t-time">00:00</div>
+      <div class="t-body"><strong>Brainstorm mở.</strong> Mục tiêu + khán giả + framing "live demo".</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:02</div>
+      <div class="t-body">Bốn câu hỏi làm rõ được trả lời; scope khoá ở 30 phút, React + Vite, khán giả business, yêu cầu bất ngờ về thời tiết.</div>
+    </div>
+    <div class="t-item milestone">
+      <div class="t-time">00:03</div>
+      <div class="t-body"><strong>Dispatch research</strong> song song — flight APIs + weather APIs qua background <code>researcher</code> agent.</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:05</div>
+      <div class="t-body">Báo cáo research trở về. Chọn Kiwi Tequila + Open-Meteo. Ba câu hỏi thiết kế kèm ASCII preview.</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:07</div>
+      <div class="t-body"><code>brainstorm-report.md</code> + <code>plan.md</code> viết vào <code>FlightScouter_AI-demo/</code>.</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:08</div>
+      <div class="t-body">Audit workflow: phase tuần tự, build check từng phase, danh sách subagent được trình bày.</div>
+    </div>
+    <div class="t-item milestone">
+      <div class="t-time">00:10</div>
+      <div class="t-body"><strong>"Chạy đi" — implement bắt đầu.</strong> Phase 1 scaffold trong thread.</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:13</div>
+      <div class="t-body">Phase 2 — <code>SearchForm</code> qua <code>fullstack-developer</code>. Build sạch sau một fix <code>type</code>-import.</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:17</div>
+      <div class="t-body">Phase 3 — flight-API service + <code>FlightResults</code>. 69 module, vẫn sạch.</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:20</div>
+      <div class="t-body">Phase 4 — <code>FilterBar</code> + sort/filter client-side trong <code>App.tsx</code>.</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:23</div>
+      <div class="t-body">Phase 5 — geocoder Open-Meteo + <code>WeatherPanel</code>.</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:26</div>
+      <div class="t-body">Phase 6 — font Inter, keyframe fade-in-up, utility scrollbar-hide, polish cuối.</div>
+    </div>
+    <div class="t-item milestone">
+      <div class="t-time">00:28</div>
+      <div class="t-body"><strong>Code review</strong> bởi <code>code-reviewer</code>. Áp dụng ba fix: gitignore <code>.env</code>, null guard, build sạch.</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:30</div>
+      <div class="t-body">User hỏi cách lấy API key Kiwi.</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:31</div>
+      <div class="t-body">"Không vào được." Dispatch research; trình bày ba phương án thay thế.</div>
+    </div>
+    <div class="t-item milestone">
+      <div class="t-time">00:32</div>
+      <div class="t-body"><strong>Pivot sang mock data.</strong> Dataset sân bay + autocomplete + flight generator seeded. Weather vẫn real.</div>
+    </div>
+    <div class="t-item">
+      <div class="t-time">00:44</div>
+      <div class="t-body">Tài liệu này được yêu cầu.</div>
+    </div>
+    <div class="t-item milestone">
+      <div class="t-time">00:45</div>
+      <div class="t-body"><strong>Xong.</strong></div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============= SECTION 8 — REPRODUCE ============= -->
+<div class="shell">
+<section id="reproduce" class="page reveal">
+  <header class="section-head">
+    <div class="section-num">§ 08 — Tái hiện</div>
+    <h2 class="section-title">Phiên mới, <span class="accent">PoC của riêng bạn.</span></h2>
+    <p class="section-lead">
+      Paste các prompt theo thứ tự, trả lời câu hỏi làm rõ bằng ràng buộc của riêng bạn.
+      Trình tự là bài học.
+    </p>
+  </header>
+
+  <div class="repro">
+    <div class="repro-step">
+      <div class="sn">1</div>
+      <div class="st">Gọi <code>/brainstorm</code> và nêu mục tiêu + khán giả + định dạng demo. Gác chi tiết kỹ thuật sang một bên.</div>
+      <div class="sd">~1 phút</div>
+    </div>
+    <div class="repro-step">
+      <div class="sn">2</div>
+      <div class="st">Trả lời bốn câu hỏi làm rõ — gắn ràng buộc vào từng câu (ngân sách thời gian, tông điệu, yêu cầu bất ngờ).</div>
+      <div class="sd">~2 phút</div>
+    </div>
+    <div class="repro-step">
+      <div class="sn">3</div>
+      <div class="st">Để AI dispatch các <strong>researcher</strong> agent cho mọi thứ thuộc bên ngoài và độc lập (APIs, libraries).</div>
+      <div class="sd">nền</div>
+    </div>
+    <div class="repro-step">
+      <div class="sn">4</div>
+      <div class="st">Chọn phong cách UI, cắt scope, và ngôn ngữ qua <code>AskUserQuestion</code> preview.</div>
+      <div class="sd">~1 phút</div>
+    </div>
+    <div class="repro-step">
+      <div class="sn">5</div>
+      <div class="st">Yêu cầu viết <code>brainstorm-report.md</code> + <code>plan.md</code> vào folder dự án.</div>
+      <div class="sd">~2 phút</div>
+    </div>
+    <div class="repro-step">
+      <div class="sn">6</div>
+      <div class="st">Hỏi "workflow của bạn là gì?" và "dùng agent/skill nào?" — audit cả hai.</div>
+      <div class="sd">~1 phút</div>
+    </div>
+    <div class="repro-step">
+      <div class="sn">7</div>
+      <div class="st">Chạy <code>/cook plan.md</code>. Review từng phase; fix compile error trước khi chạy phase tiếp theo.</div>
+      <div class="sd">~15 phút</div>
+    </div>
+    <div class="repro-step">
+      <div class="sn">8</div>
+      <div class="st">Để <code>code-reviewer</code> subagent scan toàn project. Chỉ apply 3 finding ưu tiên nhất.</div>
+      <div class="sd">~3 phút</div>
+    </div>
+    <div class="repro-step">
+      <div class="sn">9</div>
+      <div class="st">Nếu gặp blocker (thiếu key, 404, đăng ký chết), báo thẳng. Để AI đưa ra phương án.</div>
+      <div class="sd">khi cần</div>
+    </div>
+    <div class="repro-step">
+      <div class="sn">10</div>
+      <div class="st">Yêu cầu walkthrough HTML qua <code>/frontend-design</code> khi context vẫn còn tươi.</div>
+      <div class="sd">~3 phút</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ============= SECTION 9 — ARTIFACTS ============= -->
+<div class="shell">
+<section class="page reveal">
+  <header class="section-head">
+    <div class="section-num">§ 09 — Thành phẩm</div>
+    <h2 class="section-title">Những gì phiên làm việc <span class="accent">để lại.</span></h2>
+    <p class="section-lead">
+      Mọi file AI đã tạo trong phiên, gom theo vai trò.
+    </p>
+  </header>
+
+  <pre class="tree"><span class="dir">FlightScouter_AI-demo/</span>
+├── <span class="file">brainstorm-report.md</span>              <span class="anno"># viết sau P5</span>
+├── <span class="file">plan.md</span>                            <span class="anno"># plan 6 phase</span>
+├── <span class="file">session-walkthrough.html</span>           <span class="anno"># tài liệu này</span>
+├── <span class="file">index.html</span>
+├── <span class="file">vite.config.ts</span>
+├── <span class="file">.env</span>                               <span class="anno"># đã gitignore sau review</span>
+├── <span class="dir">src/</span>
+│   ├── <span class="file">App.tsx</span>                        <span class="anno"># state + wiring</span>
+│   ├── <span class="file">main.tsx</span>
+│   ├── <span class="file">index.css</span>                      <span class="anno"># Tailwind + keyframe fade-in</span>
+│   ├── <span class="dir">components/</span>
+│   │   ├── <span class="file">SearchForm.tsx</span>
+│   │   ├── <span class="file">AirportSelect.tsx</span>          <span class="anno"># thêm lúc pivot</span>
+│   │   ├── <span class="file">FlightResults.tsx</span>
+│   │   ├── <span class="file">FilterBar.tsx</span>
+│   │   └── <span class="file">WeatherPanel.tsx</span>
+│   ├── <span class="dir">services/</span>
+│   │   ├── <span class="file">flight-api.ts</span>              <span class="anno"># mock generator seeded</span>
+│   │   └── <span class="file">weather-api.ts</span>             <span class="anno"># Open-Meteo + geocoder</span>
+│   └── <span class="dir">data/</span>
+│       └── <span class="file">airports.ts</span>                <span class="anno"># 50 sân bay curated</span>
+
+<span class="dir">plans/reports/</span>
+├── <span class="file">researcher-260407-1534-flight-search-api-comparison.md</span>
+├── <span class="file">researcher-260407-1534-weather-api-comparison.md</span>
+└── <span class="file">code-reviewer-260407-1630-flightscouter-full-review.md</span></pre>
+</section>
+</div>
+
+</main>
+
+<!-- ============= FOOTER ============= -->
+<footer class="reveal">
+  <div class="shell">
+    <div class="foot-grid">
+      <div class="foot-col">
+        <h4>Về tài liệu này</h4>
+        <p class="sig">Được viết ngay trong phiên làm việc đã xây FlightScouter, bởi chính agent đã xây nó.</p>
+      </div>
+      <div class="foot-col">
+        <h4>File nguồn</h4>
+        <a href="plan.md">plan.md</a>
+        <a href="brainstorm-report.md">brainstorm-report.md</a>
+        <a href="src/App.tsx">src/App.tsx</a>
+        <a href="src/services/flight-api.ts">flight-api.ts</a>
+      </div>
+      <div class="foot-col">
+        <h4>Báo cáo research</h4>
+        <a href="../plans/reports/">plans/reports/</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  var items = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window)) {
+    items.forEach(function(el){ el.classList.add('in'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -60px 0px' });
+  items.forEach(function(el){ io.observe(el); });
+})();
+</script>
+
+<!-- =========================================================
+     FlightScouter app logic (vanilla JS compile of React src)
+     ========================================================= -->
+<script>
+(function () {
+  'use strict';
+
+  // ---------- airports dataset (port of src/data/airports.ts) ----------
+  var AIRPORTS = [
+    { iata:'SGN', name:'Tan Son Nhat', city:'Ho Chi Minh City', country:'Vietnam', lat:10.8188, lon:106.6519 },
+    { iata:'HAN', name:'Noi Bai', city:'Hanoi', country:'Vietnam', lat:21.2212, lon:105.8070 },
+    { iata:'DAD', name:'Da Nang', city:'Da Nang', country:'Vietnam', lat:16.0439, lon:108.1994 },
+    { iata:'BKK', name:'Suvarnabhumi', city:'Bangkok', country:'Thailand', lat:13.6900, lon:100.7501 },
+    { iata:'SIN', name:'Changi', city:'Singapore', country:'Singapore', lat:1.3502, lon:103.9944 },
+    { iata:'KUL', name:'Kuala Lumpur Intl', city:'Kuala Lumpur', country:'Malaysia', lat:2.7456, lon:101.7099 },
+    { iata:'MNL', name:'Ninoy Aquino', city:'Manila', country:'Philippines', lat:14.5086, lon:121.0197 },
+    { iata:'CGK', name:'Soekarno-Hatta', city:'Jakarta', country:'Indonesia', lat:-6.1256, lon:106.6559 },
+    { iata:'RGN', name:'Yangon Intl', city:'Yangon', country:'Myanmar', lat:16.9073, lon:96.1332 },
+    { iata:'PNH', name:'Phnom Penh Intl', city:'Phnom Penh', country:'Cambodia', lat:11.5466, lon:104.8441 },
+    { iata:'NRT', name:'Narita', city:'Tokyo', country:'Japan', lat:35.7647, lon:140.3864 },
+    { iata:'HND', name:'Haneda', city:'Tokyo', country:'Japan', lat:35.5494, lon:139.7798 },
+    { iata:'KIX', name:'Kansai', city:'Osaka', country:'Japan', lat:34.4347, lon:135.2441 },
+    { iata:'ICN', name:'Incheon', city:'Seoul', country:'South Korea', lat:37.4602, lon:126.4407 },
+    { iata:'HKG', name:'Hong Kong Intl', city:'Hong Kong', country:'China', lat:22.3080, lon:113.9185 },
+    { iata:'PVG', name:'Pudong', city:'Shanghai', country:'China', lat:31.1443, lon:121.8083 },
+    { iata:'PEK', name:'Capital Intl', city:'Beijing', country:'China', lat:40.0799, lon:116.6031 },
+    { iata:'TPE', name:'Taoyuan', city:'Taipei', country:'Taiwan', lat:25.0777, lon:121.2330 },
+    { iata:'DEL', name:'Indira Gandhi', city:'New Delhi', country:'India', lat:28.5562, lon:77.1000 },
+    { iata:'BOM', name:'Chhatrapati Shivaji', city:'Mumbai', country:'India', lat:19.0896, lon:72.8656 },
+    { iata:'DXB', name:'Dubai Intl', city:'Dubai', country:'UAE', lat:25.2532, lon:55.3657 },
+    { iata:'DOH', name:'Hamad Intl', city:'Doha', country:'Qatar', lat:25.2731, lon:51.6081 },
+    { iata:'LHR', name:'Heathrow', city:'London', country:'United Kingdom', lat:51.4700, lon:-0.4543 },
+    { iata:'CDG', name:'Charles de Gaulle', city:'Paris', country:'France', lat:49.0097, lon:2.5479 },
+    { iata:'FRA', name:'Frankfurt', city:'Frankfurt', country:'Germany', lat:50.0333, lon:8.5706 },
+    { iata:'AMS', name:'Schiphol', city:'Amsterdam', country:'Netherlands', lat:52.3086, lon:4.7639 },
+    { iata:'FCO', name:'Fiumicino', city:'Rome', country:'Italy', lat:41.8003, lon:12.2389 },
+    { iata:'MAD', name:'Barajas', city:'Madrid', country:'Spain', lat:40.4719, lon:-3.5626 },
+    { iata:'IST', name:'Istanbul Intl', city:'Istanbul', country:'Turkey', lat:41.2753, lon:28.7519 },
+    { iata:'ZRH', name:'Zurich', city:'Zurich', country:'Switzerland', lat:47.4647, lon:8.5492 },
+    { iata:'MUC', name:'Munich', city:'Munich', country:'Germany', lat:48.3538, lon:11.7861 },
+    { iata:'SYD', name:'Kingsford Smith', city:'Sydney', country:'Australia', lat:-33.9461, lon:151.1772 },
+    { iata:'MEL', name:'Tullamarine', city:'Melbourne', country:'Australia', lat:-37.6733, lon:144.8433 },
+    { iata:'AKL', name:'Auckland', city:'Auckland', country:'New Zealand', lat:-37.0082, lon:174.7850 },
+    { iata:'JFK', name:'John F. Kennedy', city:'New York', country:'United States', lat:40.6413, lon:-73.7781 },
+    { iata:'LAX', name:'Los Angeles Intl', city:'Los Angeles', country:'United States', lat:33.9425, lon:-118.4081 },
+    { iata:'SFO', name:'San Francisco Intl', city:'San Francisco', country:'United States', lat:37.6213, lon:-122.3790 },
+    { iata:'ORD', name:"O'Hare", city:'Chicago', country:'United States', lat:41.9742, lon:-87.9073 },
+    { iata:'ATL', name:'Hartsfield-Jackson', city:'Atlanta', country:'United States', lat:33.6407, lon:-84.4277 },
+    { iata:'YYZ', name:'Pearson', city:'Toronto', country:'Canada', lat:43.6777, lon:-79.6248 },
+    { iata:'YVR', name:'Vancouver Intl', city:'Vancouver', country:'Canada', lat:49.1947, lon:-123.1790 },
+    { iata:'MEX', name:'Benito Juarez', city:'Mexico City', country:'Mexico', lat:19.4363, lon:-99.0721 },
+    { iata:'GRU', name:'Guarulhos', city:'São Paulo', country:'Brazil', lat:-23.4356, lon:-46.4731 },
+    { iata:'EZE', name:'Ministro Pistarini', city:'Buenos Aires', country:'Argentina', lat:-34.8222, lon:-58.5358 },
+    { iata:'SCL', name:'Arturo Merino', city:'Santiago', country:'Chile', lat:-33.3930, lon:-70.7858 },
+    { iata:'BOG', name:'El Dorado', city:'Bogotá', country:'Colombia', lat:4.7016, lon:-74.1469 },
+    { iata:'LIM', name:'Jorge Chavez', city:'Lima', country:'Peru', lat:-12.0219, lon:-77.1143 },
+    { iata:'JNB', name:"O.R. Tambo", city:'Johannesburg', country:'South Africa', lat:-26.1392, lon:28.2460 },
+    { iata:'CAI', name:'Cairo Intl', city:'Cairo', country:'Egypt', lat:30.1219, lon:31.4056 },
+    { iata:'NBO', name:'Jomo Kenyatta', city:'Nairobi', country:'Kenya', lat:-1.3192, lon:36.9278 }
+  ];
+
+  function searchAirports(q, limit) {
+    limit = limit || 8;
+    if (!q || !q.trim()) return [];
+    var ql = q.toLowerCase();
+    var out = [];
+    for (var i = 0; i < AIRPORTS.length && out.length < limit; i++) {
+      var a = AIRPORTS[i];
+      if (a.iata.toLowerCase().indexOf(ql) >= 0 ||
+          a.city.toLowerCase().indexOf(ql) >= 0 ||
+          a.name.toLowerCase().indexOf(ql) >= 0 ||
+          a.country.toLowerCase().indexOf(ql) >= 0) {
+        out.push(a);
+      }
+    }
+    return out;
+  }
+  function findAirport(iata) {
+    for (var i = 0; i < AIRPORTS.length; i++) if (AIRPORTS[i].iata === iata) return AIRPORTS[i];
+    return null;
+  }
+
+  // ---------- flight generator (port of src/services/flight-api.ts) ----------
+  var AIRLINES = [
+    { name:'Vietnam Airlines', code:'VN' }, { name:'VietJet Air', code:'VJ' },
+    { name:'Bamboo Airways', code:'QH' }, { name:'Singapore Airlines', code:'SQ' },
+    { name:'Thai Airways', code:'TG' }, { name:'AirAsia', code:'AK' },
+    { name:'Japan Airlines', code:'JL' }, { name:'ANA', code:'NH' },
+    { name:'Korean Air', code:'KE' }, { name:'Cathay Pacific', code:'CX' },
+    { name:'Emirates', code:'EK' }, { name:'Qatar Airways', code:'QR' },
+    { name:'British Airways', code:'BA' }, { name:'Lufthansa', code:'LH' },
+    { name:'Air France', code:'AF' }, { name:'Delta', code:'DL' },
+    { name:'United Airlines', code:'UA' }, { name:'American Airlines', code:'AA' },
+    { name:'Qantas', code:'QF' }, { name:'Turkish Airlines', code:'TK' }
+  ];
+  var STOPOVER_CITIES = ['Bangkok','Singapore','Hong Kong','Dubai','Seoul','Taipei','Kuala Lumpur','Doha','Istanbul','Tokyo'];
+
+  function estimateFlightHours(from, to) {
+    var R = 6371;
+    var dLat = (to.lat - from.lat) * Math.PI / 180;
+    var dLon = (to.lon - from.lon) * Math.PI / 180;
+    var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+      Math.cos(from.lat*Math.PI/180)*Math.cos(to.lat*Math.PI/180) *
+      Math.sin(dLon/2)*Math.sin(dLon/2);
+    var dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return dist / 800 + 0.5;
+  }
+  function seededRandom(seed) {
+    var h = 0;
+    for (var i = 0; i < seed.length; i++) h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0;
+    return function() {
+      h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+      h = Math.imul(h ^ (h >>> 13), 0x45d9f3b);
+      h = (h ^ (h >>> 16)) >>> 0;
+      return h / 4294967296;
+    };
+  }
+  function formatDuration(hours) {
+    var h = Math.floor(hours);
+    var m = Math.round((hours - h) * 60);
+    return h + 'h ' + m + 'm';
+  }
+
+  function searchFlights(params) {
+    return new Promise(function (resolve, reject) {
+      var fromAp = findAirport(params.from);
+      var toAp = findAirport(params.to);
+      if (!fromAp || !toAp) return reject(new Error('Invalid airport selection'));
+      if (params.from === params.to) return reject(new Error('Origin and destination must be different'));
+
+      setTimeout(function () {
+        var baseHours = estimateFlightHours(fromAp, toAp);
+        var rand = seededRandom(params.from + '-' + params.to + '-' + params.departDate);
+        var count = 8 + Math.floor(rand() * 8);
+        var flights = [];
+        for (var i = 0; i < count; i++) {
+          var airline = AIRLINES[Math.floor(rand() * AIRLINES.length)];
+          var stopRoll = rand();
+          var stops = stopRoll < 0.4 ? 0 : stopRoll < 0.85 ? 1 : 2;
+          var extraHours = stops === 0 ? 0 : stops === 1 ? 2 + rand() * 2 : 5 + rand() * 3;
+          var totalHours = baseHours + extraHours + (rand() * 1.5 - 0.5);
+          var departHour = Math.floor(rand() * 24);
+          var departMinute = Math.floor(rand() * 4) * 15;
+          var depart = new Date(params.departDate + 'T00:00:00');
+          depart.setHours(departHour, departMinute, 0, 0);
+          var arrive = new Date(depart.getTime() + totalHours * 3600000);
+          var basePricePerKm = 0.05 + rand() * 0.08;
+          var distKm = (baseHours - 0.5) * 800;
+          var price = distKm * basePricePerKm;
+          if (stops === 0) price *= 1.1 + rand() * 0.3;
+          if (stops === 1) price *= 0.7 + rand() * 0.3;
+          if (stops === 2) price *= 0.5 + rand() * 0.3;
+          if (params.roundTrip) price *= 1.7 + rand() * 0.3;
+          price = Math.round(price);
+          var stopCities = [];
+          if (stops > 0) {
+            var avail = STOPOVER_CITIES.filter(function (c) { return c !== fromAp.city && c !== toAp.city; });
+            for (var s = 0; s < stops; s++) stopCities.push(avail[Math.floor(rand() * avail.length)]);
+          }
+          flights.push({
+            id: airline.code + '-' + i + '-' + params.departDate,
+            airline: airline.name,
+            airlineCode: airline.code,
+            price: price,
+            currency: 'USD',
+            departTime: depart.toISOString(),
+            arrivalTime: arrive.toISOString(),
+            duration: formatDuration(Math.max(totalHours, 1)),
+            stops: stops,
+            stopCities: stopCities
+          });
+        }
+        flights.sort(function (a, b) { return a.price - b.price; });
+        resolve(flights);
+      }, 800 + Math.random() * 700);
+    });
+  }
+
+  // ---------- weather service (port of src/services/weather-api.ts) ----------
+  var WMO = {
+    0:{icon:'☀️',desc:'Clear sky'}, 1:{icon:'🌤',desc:'Mainly clear'},
+    2:{icon:'⛅',desc:'Partly cloudy'}, 3:{icon:'☁️',desc:'Overcast'},
+    45:{icon:'🌫',desc:'Fog'}, 48:{icon:'🌫',desc:'Freezing fog'},
+    51:{icon:'🌦',desc:'Light drizzle'}, 53:{icon:'🌦',desc:'Moderate drizzle'},
+    55:{icon:'🌦',desc:'Dense drizzle'}, 61:{icon:'🌧',desc:'Light rain'},
+    63:{icon:'🌧',desc:'Moderate rain'}, 65:{icon:'🌧',desc:'Heavy rain'},
+    71:{icon:'🌨',desc:'Light snow'}, 73:{icon:'🌨',desc:'Moderate snow'},
+    75:{icon:'🌨',desc:'Heavy snow'}, 80:{icon:'🌧',desc:'Rain showers'},
+    81:{icon:'🌧',desc:'Moderate showers'}, 82:{icon:'⛈',desc:'Heavy showers'},
+    95:{icon:'⛈',desc:'Thunderstorm'}, 96:{icon:'⛈',desc:'Thunderstorm w/ hail'},
+    99:{icon:'⛈',desc:'Severe thunderstorm'}
+  };
+  function weatherInfo(code) { return WMO[code] || { icon:'❓', desc:'Unknown' }; }
+
+  function getWeatherForecast(city, startDate, endDate) {
+    var geoUrl = 'https://geocoding-api.open-meteo.com/v1/search?name=' +
+      encodeURIComponent(city) + '&count=1&language=en';
+    return fetch(geoUrl).then(function (r) { return r.json(); }).then(function (geo) {
+      var res = geo.results && geo.results[0];
+      if (!res) throw new Error('Location not found: ' + city);
+      var url = 'https://api.open-meteo.com/v1/forecast' +
+        '?latitude=' + res.latitude +
+        '&longitude=' + res.longitude +
+        '&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum' +
+        '&start_date=' + startDate +
+        '&end_date=' + endDate +
+        '&timezone=auto';
+      return fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+        var daily = data.daily;
+        if (!daily || !daily.time) return { location: res.name, forecasts: [] };
+        var forecasts = daily.time.map(function (date, i) {
+          var info = weatherInfo(daily.weather_code[i]);
+          return {
+            date: date,
+            tempMax: Math.round(daily.temperature_2m_max[i]),
+            tempMin: Math.round(daily.temperature_2m_min[i]),
+            icon: info.icon,
+            description: info.desc
+          };
+        });
+        return { location: res.name, forecasts: forecasts };
+      });
+    });
+  }
+
+  // ---------- DOM helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function el(tag, attrs, children) {
+    var n = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === 'class') n.className = attrs[k];
+      else if (k === 'html') n.innerHTML = attrs[k];
+      else n.setAttribute(k, attrs[k]);
+    }
+    if (children) for (var i = 0; i < children.length; i++) {
+      if (typeof children[i] === 'string') n.appendChild(document.createTextNode(children[i]));
+      else if (children[i]) n.appendChild(children[i]);
+    }
+    return n;
+  }
+  function formatTime(iso) {
+    if (!iso) return '--:--';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '--:--';
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+  function stopsLabel(n) { return n === 0 ? 'Direct' : n === 1 ? '1 stop' : n + ' stops'; }
+
+  // ---------- state ----------
+  var state = {
+    from: '', to: '', roundTrip: true,
+    flights: [], loading: false, error: null,
+    sortOrder: 'asc', selectedAirlines: [],
+    lastParams: null
+  };
+
+  // ---------- airport autocomplete ----------
+  function setupAirportField(which) {
+    var field = document.querySelector('.fs-field[data-ap="' + which + '"]');
+    var input = field.querySelector('input');
+    var dropdown = null;
+    var selected = false;
+
+    function close() {
+      if (dropdown) { dropdown.remove(); dropdown = null; }
+    }
+    function pick(a) {
+      state[which] = a.iata;
+      input.value = a.city + ' (' + a.iata + ')';
+      selected = true;
+      close();
+      clearError(which);
+    }
+    function openResults(q) {
+      close();
+      var results = searchAirports(q);
+      dropdown = el('div', { class: 'fs-dropdown' });
+      if (results.length === 0) {
+        dropdown.appendChild(el('div', { class: 'empty' }, ['No airports found']));
+      } else {
+        results.forEach(function (a) {
+          var btn = el('button', { type: 'button', class: 'it' }, [
+            el('span', { class: 'code' }, [a.iata]),
+            el('span', { class: 'lbl' }, [
+              el('span', { class: 'city' }, [a.city]),
+              el('span', { class: 'sub' }, [a.name + ', ' + a.country])
+            ])
+          ]);
+          btn.addEventListener('click', function () { pick(a); });
+          dropdown.appendChild(btn);
+        });
+      }
+      field.appendChild(dropdown);
+    }
+
+    input.addEventListener('input', function () {
+      if (selected) { selected = false; state[which] = ''; }
+      var q = input.value.trim();
+      if (q.length > 0) openResults(q);
+      else close();
+    });
+    input.addEventListener('focus', function () {
+      if (!selected && input.value.trim()) openResults(input.value.trim());
+    });
+    document.addEventListener('mousedown', function (e) {
+      if (!field.contains(e.target)) close();
+    });
+  }
+
+  // ---------- errors ----------
+  function showError(field, msg) {
+    var inp = $('fs-' + field);
+    var err = $('fs-err-' + field);
+    if (inp) inp.classList.add('err');
+    if (err) { err.textContent = msg; err.hidden = false; }
+  }
+  function clearError(field) {
+    var inp = $('fs-' + field);
+    var err = $('fs-err-' + field);
+    if (inp) inp.classList.remove('err');
+    if (err) { err.hidden = true; err.textContent = ''; }
+  }
+  function clearAllErrors() { ['from','to','depart','return'].forEach(clearError); }
+
+  // ---------- round-trip toggle ----------
+  $('fs-roundtrip').addEventListener('click', function () {
+    state.roundTrip = !state.roundTrip;
+    this.classList.toggle('on', state.roundTrip);
+    this.setAttribute('aria-checked', state.roundTrip);
+    $('fs-return-field').style.display = state.roundTrip ? '' : 'none';
+    if (!state.roundTrip) clearError('return');
+  });
+
+  // ---------- form submit ----------
+  $('fs-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearAllErrors();
+
+    var depart = $('fs-depart').value;
+    var ret = $('fs-return').value;
+    var ok = true;
+    if (!state.from) { showError('from', 'Select origin airport'); ok = false; }
+    if (!state.to) { showError('to', 'Select destination airport'); ok = false; }
+    if (state.from && state.to && state.from === state.to) { showError('to', 'Destination must differ from origin'); ok = false; }
+    if (!depart) { showError('depart', 'Depart date is required'); ok = false; }
+    if (state.roundTrip) {
+      if (!ret) { showError('return', 'Return date is required'); ok = false; }
+      else if (depart && ret < depart) { showError('return', 'Return must be on or after depart'); ok = false; }
+    }
+    if (!ok) return;
+
+    runSearch({
+      from: state.from, to: state.to,
+      departDate: depart, returnDate: state.roundTrip ? ret : undefined,
+      roundTrip: state.roundTrip
+    });
+  });
+
+  // ---------- run search ----------
+  function runSearch(params) {
+    state.loading = true;
+    state.error = null;
+    state.flights = [];
+    state.selectedAirlines = [];
+    state.lastParams = params;
+    setSubmitLoading(true);
+    renderError();
+    renderFilterBar();
+    renderResults();
+    renderWeather();
+
+    searchFlights(params).then(function (flights) {
+      state.flights = flights;
+      state.loading = false;
+      setSubmitLoading(false);
+      renderFilterBar();
+      renderResults();
+    }).catch(function (err) {
+      state.flights = [];
+      state.loading = false;
+      state.error = (err && err.message) || 'Something went wrong. Please try again.';
+      setSubmitLoading(false);
+      renderError();
+      renderResults();
+    });
+  }
+  function setSubmitLoading(on) {
+    var btn = $('fs-submit');
+    btn.disabled = on;
+    btn.innerHTML = on
+      ? '<span class="spin"></span>Searching…'
+      : 'Search Flights';
+  }
+
+  // ---------- render: error ----------
+  function renderError() {
+    var box = $('fs-error-box');
+    box.innerHTML = '';
+    if (state.error) {
+      var div = el('div', { class: 'fs-error' }, [state.error]);
+      box.appendChild(div);
+    }
+  }
+
+  // ---------- render: filter bar ----------
+  function renderFilterBar() {
+    var wrap = $('fs-filterbar');
+    wrap.innerHTML = '';
+    if (!state.lastParams || state.error || state.loading || state.flights.length === 0) return;
+
+    var bar = el('div', { class: 'fs-filterbar' });
+    var sel = el('select', { class: 'fs-sel' });
+    [['asc','Price: Low → High'], ['desc','Price: High → Low']].forEach(function (p) {
+      var opt = el('option', { value: p[0] }, [p[1]]);
+      if (p[0] === state.sortOrder) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', function () {
+      state.sortOrder = sel.value;
+      renderResults();
+    });
+    bar.appendChild(sel);
+
+    var airlines = Array.from(new Set(state.flights.map(function (f) { return f.airline; }))).sort();
+    airlines.forEach(function (a) {
+      var active = state.selectedAirlines.indexOf(a) >= 0;
+      var chip = el('button', { type: 'button', class: 'fs-chip' + (active ? ' on' : '') }, [a]);
+      chip.addEventListener('click', function () {
+        var i = state.selectedAirlines.indexOf(a);
+        if (i >= 0) state.selectedAirlines.splice(i, 1);
+        else state.selectedAirlines.push(a);
+        renderFilterBar();
+        renderResults();
+      });
+      bar.appendChild(chip);
+    });
+    wrap.appendChild(bar);
+  }
+
+  // ---------- render: results ----------
+  function renderResults() {
+    var wrap = $('fs-results');
+    wrap.innerHTML = '';
+    if (!state.lastParams || state.error) return;
+
+    if (state.loading) {
+      var container = el('div', { class: 'fs-results' });
+      for (var i = 0; i < 3; i++) {
+        var s = el('div', { class: 'fs-skel' });
+        s.innerHTML =
+          '<div style="display:flex;justify-content:space-between;margin-bottom:12px;">' +
+          '<div class="bar" style="height:20px;width:120px;"></div>' +
+          '<div class="bar" style="height:28px;width:80px;"></div></div>' +
+          '<div class="bar" style="height:14px;width:160px;margin-bottom:8px;"></div>' +
+          '<div style="display:flex;gap:14px;">' +
+          '<div class="bar" style="height:12px;width:80px;"></div>' +
+          '<div class="bar" style="height:12px;width:60px;"></div></div>';
+        container.appendChild(s);
+      }
+      wrap.appendChild(container);
+      return;
+    }
+
+    // filter + sort
+    var list = state.flights.slice();
+    if (state.selectedAirlines.length > 0) {
+      list = list.filter(function (f) { return state.selectedAirlines.indexOf(f.airline) >= 0; });
+    }
+    list.sort(function (a, b) {
+      return state.sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
+    });
+
+    if (list.length === 0) {
+      wrap.appendChild(el('div', { class: 'fs-empty' }, ['No flights found']));
+      return;
+    }
+
+    var container2 = el('div', { class: 'fs-results' });
+    container2.appendChild(el('p', { class: 'count' }, [list.length + ' flights found']));
+
+    list.forEach(function (f, idx) {
+      var card = el('div', { class: 'fs-card', style: 'animation-delay:' + (idx * 40) + 'ms' });
+      var row1 = el('div', { class: 'fs-card-row1' }, [
+        el('div', { class: 'fs-al' }, [
+          el('span', { class: 'al-code' }, [f.airlineCode]),
+          el('span', { class: 'al-name' }, [f.airline])
+        ]),
+        el('span', { class: 'fs-price' }, ['$' + f.price.toLocaleString()])
+      ]);
+      var times = el('div', { class: 'fs-times' }, [
+        el('span', null, [formatTime(f.departTime)]),
+        el('span', { class: 'arr' }, ['→']),
+        el('span', null, [formatTime(f.arrivalTime)])
+      ]);
+      var meta = el('div', { class: 'fs-meta' }, [
+        el('span', null, [f.duration]),
+        el('span', { class: f.stops === 0 ? 'stops-d' : 'stops-s' }, [stopsLabel(f.stops)])
+      ]);
+      if (f.stopCities.length > 0) {
+        meta.appendChild(el('span', null, ['via ' + f.stopCities.join(', ')]));
+      }
+      card.appendChild(row1);
+      card.appendChild(times);
+      card.appendChild(meta);
+      container2.appendChild(card);
+    });
+    wrap.appendChild(container2);
+  }
+
+  // ---------- render: weather ----------
+  var weatherReqId = 0;
+  function renderWeather() {
+    var wrap = $('fs-weather');
+    wrap.innerHTML = '';
+    if (!state.lastParams || state.error) return;
+
+    var p = state.lastParams;
+    var toAp = findAirport(p.to);
+    var city = toAp ? toAp.city : p.to;
+    var startDate = p.departDate;
+    var endDate = p.returnDate || p.departDate;
+
+    var panel = el('div', { class: 'fs-weather' });
+    var head = el('div', { class: 'fs-weather-h' }, ['☁️  Weather forecast']);
+    panel.appendChild(head);
+    var row = el('div', { class: 'fs-weather-row' });
+
+    // skeletons
+    for (var i = 0; i < 5; i++) {
+      var d = el('div', { class: 'fs-day' });
+      d.innerHTML = '<div class="dn" style="background:rgba(255,255,255,0.15);width:40px;height:12px;border-radius:4px;"></div>' +
+        '<div class="ic" style="background:rgba(255,255,255,0.15);width:32px;height:32px;border-radius:50%;margin-top:6px;"></div>' +
+        '<div style="background:rgba(255,255,255,0.15);width:50px;height:12px;border-radius:4px;margin-top:6px;"></div>';
+      row.appendChild(d);
+    }
+    panel.appendChild(row);
+    wrap.appendChild(panel);
+
+    var myId = ++weatherReqId;
+    getWeatherForecast(city, startDate, endDate).then(function (res) {
+      if (myId !== weatherReqId) return;
+      head.textContent = '☁️  Weather at ' + res.location;
+      row.innerHTML = '';
+      if (res.forecasts.length === 0) {
+        row.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:13px;padding:8px;">No forecast available for these dates.</div>';
+        return;
+      }
+      res.forecasts.forEach(function (f) {
+        var dt = new Date(f.date + 'T00:00:00');
+        var dn = dt.toLocaleDateString('en-US', { weekday: 'short' });
+        var dd = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        var day = el('div', { class: 'fs-day' }, [
+          el('div', { class: 'dn' }, [dn]),
+          el('div', { class: 'dd' }, [dd]),
+          el('div', { class: 'ic' }, [f.icon]),
+          el('div', { class: 'tm', html: f.tempMax + '° <span class="lo">' + f.tempMin + '°</span>' }),
+          el('div', { class: 'ds' }, [f.description])
+        ]);
+        row.appendChild(day);
+      });
+    }).catch(function (err) {
+      if (myId !== weatherReqId) return;
+      row.innerHTML = '<div style="color:#f87171;font-size:13px;padding:8px;">' + (err.message || 'Failed to load weather forecast.') + '</div>';
+    });
+  }
+
+  // ---------- init ----------
+  setupAirportField('from');
+  setupAirportField('to');
+
+  // Default dates: today + 14 days, return +21 days
+  var today = new Date();
+  function fmt(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + dd;
+  }
+  var depart = new Date(today.getTime() + 14 * 86400000);
+  var ret = new Date(today.getTime() + 21 * 86400000);
+  $('fs-depart').value = fmt(depart);
+  $('fs-return').value = fmt(ret);
+})();
+</script>
+
+</body>
+</html>
