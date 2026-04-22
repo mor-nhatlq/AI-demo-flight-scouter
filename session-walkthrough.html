@@ -546,6 +546,70 @@ section.page {
   border-radius: 4px;
   color: var(--accent-amber);
 }
+/* Bridge — narrative connector between prompt cards */
+.bridge {
+  position: relative;
+  padding: 18px 4px 18px 52px;
+  margin: -10px 0;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.65;
+}
+.bridge::before {
+  content: '';
+  position: absolute;
+  left: 22px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    var(--border-2) 10%,
+    var(--border-2) 90%,
+    transparent 100%);
+}
+.bridge::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 26px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--bg-0);
+  border: 1px solid var(--border-3);
+}
+.bridge .bridge-label {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-right: 10px;
+  padding: 2px 9px;
+  border: 1px solid var(--border-2);
+  border-radius: 100px;
+  vertical-align: 2px;
+  background: var(--bg-1);
+}
+.bridge .bridge-text { color: var(--ink-2); }
+.bridge .bridge-text strong { color: var(--ink-1); font-weight: 500; }
+.bridge .bridge-text em { color: var(--accent-amber); font-style: normal; }
+.bridge .bridge-text code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 1px 6px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  color: var(--accent-amber);
+}
+@media (max-width: 680px) {
+  .bridge { padding-left: 40px; }
+  .bridge::before { left: 15px; }
+  .bridge::after { left: 11px; }
+}
+
 .ai-reply {
   margin-top: 22px;
   padding: 18px 22px;
@@ -1443,11 +1507,11 @@ footer {
 <!-- ============= LIVE APP ============= -->
 <div class="shell">
 <section class="live-app reveal">
-  <h2 class="live-heading">FlightScouter, <span class="accent">bản compile tương tác.</span></h2>
+  <h2 class="live-heading">FlightScouter <span class="accent">demo.</span></h2>
   <p class="live-intro">
-    Đây chính là app đã được xây dựng trong phiên — compile từ React + Vite sang vanilla JS
-    để chạy inline ngay trong trang này. Chọn điểm đi, điểm đến, ngày — kết quả sinh
-    ngay tại trình duyệt, dự báo thời tiết gọi thật từ Open-Meteo.
+    Đây chính là app đã được xây dựng hoàn toàn bằng AI — React + Vite.
+    Chọn điểm đi, điểm đến, ngày — kết quả sinh ngay tại trình duyệt,
+    dự báo thời tiết gọi thật từ Open-Meteo.
   </p>
 
   <div class="fs-frame">
@@ -1517,7 +1581,7 @@ footer {
 <!-- ============= HERO ============= -->
 <div class="shell">
 <section class="hero reveal">
-  <div class="hero-label">Hướng dẫn prompting — tài liệu training nội bộ</div>
+  <div class="hero-label">Breakdown chi tiết cuộc trò chuyện</div>
   <h1>FlightScouter, <span class="accent">xây xong trong một phiên hội thoại.</span></h1>
   <p class="hero-sub">
     Tài liệu này ghi lại đúng quá trình đã tạo ra <strong>FlightScouter</strong> —
@@ -1658,6 +1722,20 @@ footer {
       </div>
     </article>
 
+    <!-- Bridge P1 → P2 -->
+    <div class="bridge">
+      <span class="bridge-label">Sau P1</span>
+      <span class="bridge-text">
+        AI scout workspace (qua <code>Explore</code> subagent), xác nhận project trống, rồi
+        trả về <strong>4 câu hỏi trắc nghiệm</strong> cần user chốt trước khi đi tiếp:
+        <em>nguồn dữ liệu</em> (mock / real API / hybrid),
+        <em>tech stack</em> (Next.js / React+Vite / vanilla),
+        <em>thời lượng demo</em> (15-20 / 30-45 / 60+ phút),
+        <em>khán giả</em> (business / developers / mixed).
+        Câu trả lời của user nằm trong prompt kế tiếp.
+      </span>
+    </div>
+
     <!-- P2 -->
     <article class="prompt-card">
       <div class="prompt-head">
@@ -1711,6 +1789,19 @@ footer {
       </div>
     </article>
 
+    <!-- Bridge P2 → P3 -->
+    <div class="bridge">
+      <span class="bridge-label">Sau P2</span>
+      <span class="bridge-text">
+        Trong <strong>cùng một lượt trả lời</strong>, AI làm ba việc: (1) xác nhận ngắn gọn
+        các lựa chọn, (2) đưa ra nhận định — user muốn API thật nhưng <em>"có option nào khác không"</em>
+        là gợi ý cần tìm hiểu lựa chọn free, (3) dispatch <strong>hai researcher subagent
+        song song</strong> chạy nền để so sánh flight APIs và weather APIs. Không cần prompt
+        riêng để kích hoạt research — AI chủ động làm vì trong P2 user đã yêu cầu
+        "<em>tìm hiểu giúp tôi xem có các free option nào</em>".
+      </span>
+    </div>
+
     <!-- P3 -->
     <article class="prompt-card">
       <div class="prompt-head">
@@ -1754,6 +1845,20 @@ footer {
         </div>
       </div>
     </article>
+
+    <!-- Bridge P3 → P4 -->
+    <div class="bridge">
+      <span class="bridge-label">Sau P3</span>
+      <span class="bridge-text">
+        Khi cả hai researcher trả kết quả, AI tổng hợp thành bảng winners:
+        <strong>Kiwi Tequila API</strong> cho chuyến bay (free tier không cần credit card,
+        real-time) và <strong>Open-Meteo</strong> cho thời tiết (không cần API key, forecast 16 ngày).
+        Xong phần tech, còn <strong>3 quyết định thiết kế</strong> chưa chốt — AI gọi
+        <code>AskUserQuestion</code> lần hai, lần này kèm <em>ASCII preview mockup</em>
+        đặt cạnh mỗi option: phong cách UI (glassmorphism / clean minimal / dashboard),
+        phạm vi filter, ngôn ngữ UI.
+      </span>
+    </div>
 
     <!-- P4 -->
     <article class="prompt-card">
@@ -1806,6 +1911,20 @@ footer {
       </div>
     </article>
 
+    <!-- Bridge P4 → P5 -->
+    <div class="bridge">
+      <span class="bridge-label">Sau P4</span>
+      <span class="bridge-text">
+        AI tổng hợp toàn bộ quyết định thành một <strong>Design Summary</strong>:
+        bảng Purpose / Stack / APIs / UI Style / Filters / Language / Demo time,
+        cộng với 5 features trong scope và sơ đồ kiến trúc SPA (không cần backend vì
+        cả hai API đều CORS-friendly). Cuối cùng AI hỏi:
+        "<em>Bạn có muốn thêm/bớt gì không? Nếu OK thì tôi sẽ tạo tài liệu yêu cầu
+        (brainstorm report) và tiếp tục sang plan.</em>" Đây là moment quan trọng —
+        user chưa sẵn sàng commit ngay.
+      </span>
+    </div>
+
     <!-- P5 -->
     <article class="prompt-card">
       <div class="prompt-head">
@@ -1814,33 +1933,60 @@ footer {
           <div class="prompt-tag">
             <span class="time">00:07</span>
             <span class="dot"></span>
-            <span>Đổi hướng</span>
+            <span>Đổi hướng giữa chừng</span>
           </div>
-          <h3 class="prompt-title">Push-back ngắn thắng giải thích dài.</h3>
+          <h3 class="prompt-title">Hai tin nhắn liên tiếp: do dự, rồi chốt.</h3>
         </div>
       </div>
       <div class="prompt-body">
+
+        <p style="margin:0 0 16px;color:var(--ink-2);font-size:14px;line-height:1.65;">
+          Sau khi AI hỏi <em>"Bạn có muốn thêm/bớt gì không?"</em>, user gửi hai tin nhắn
+          cách nhau vài giây. Tin thứ nhất mang tính <strong>thăm dò</strong> — báo rằng
+          chưa 100% hài lòng nhưng cũng không muốn liệt kê cụ thể phải sửa gì.
+        </p>
+
         <blockquote class="quote">Cần chỉnh sửa</blockquote>
+
+        <p style="margin:16px 0;color:var(--ink-2);font-size:14px;line-height:1.65;">
+          AI phản ứng trung tính: "<em>Bạn muốn chỉnh sửa gì? Cứ nói thoải mái — thêm
+          feature, bớt feature, đổi style, hay thay đổi approach gì cũng được!</em>"
+          Không phán đoán, không tự sửa. Mở cửa cho user suy nghĩ thêm.
+          Trong lúc đó, user nhận ra rằng <strong>nhìn plan chi tiết sẽ dễ phản biện
+          hơn là tranh luận trong không khí</strong> — nên pivot sang yêu cầu xuất file:
+        </p>
+
         <blockquote class="quote">À thôi, xuất cho tôi cái plan đi để tôi review. Ném vào folder FlightScouter nha</blockquote>
 
         <div class="meta-grid">
           <div class="meta-k">Ý định</div>
-          <div class="meta-v">Thể hiện do dự, rồi quyết định dứt khoát đi tiếp thay vì cứ xoay quanh.</div>
+          <div class="meta-v">Đổi chiến thuật: thay vì tranh luận trừu tượng, chuyển sang review một <strong>artifact cụ thể</strong> (plan.md) nơi có thể comment từng dòng.</div>
           <div class="meta-k">Kết quả</div>
-          <div class="meta-v"><code>brainstorm-report.md</code> + <code>plan.md</code> chi tiết 6 phase, mỗi phase có step, danh sách file, tiêu chí hoàn thành, dependency.</div>
+          <div class="meta-v">AI viết hai file markdown vào folder dự án: <code>brainstorm-report.md</code> (problem statement + decisions table + evaluated alternatives + risks + success criteria) và <code>plan.md</code> với YAML frontmatter <code>status: pending</code>, chi tiết 6 phase — mỗi phase có step-by-step, danh sách file cần sửa/tạo, tiêu chí hoàn thành, thời lượng ước tính, dependency giữa các phase.</div>
         </div>
 
         <div class="ai-reply">
           <div class="ai-reply-label">Phản hồi của AI</div>
-          <div class="ai-reply-text">Lần đầu: "Bạn muốn chỉnh sửa gì? Cứ nói thoải mái." Ngay khi user đổi ý, AI hiểu ý và hành động: viết 2 file vào <code>FlightScouter_AI-demo/</code> — <code>brainstorm-report.md</code> (problem, decisions, architecture, risks, success criteria) và <code>plan.md</code> (6 phase × step/file/success criteria, tổng ~30 phút). Kết: "Review và cho tôi biết muốn chỉnh gì nhé! Khi OK tôi sẽ bắt đầu implement."</div>
+          <div class="ai-reply-text">Sau khi ghi 2 file, AI trả về outline của 6 phase đã viết (Scaffold → Search Form → Flight API + Results → Filter/Sort → Weather Panel → Glassmorphism Polish), tổng thời lượng ~30 phút. Kết: "<em>Review và cho tôi biết muốn chỉnh gì nhé! Khi OK tôi sẽ bắt đầu implement.</em>" Chuyển quyền kiểm soát lại cho user — không implement cho đến khi user cho phép.</div>
         </div>
 
         <div class="takeaway">
           <div class="takeaway-label">Bài học</div>
-          <div class="takeaway-text">Quyền thay đổi ý định giữa chừng bị đánh giá thấp. Hai từ "<strong>À thôi</strong>" không tốn gì; đợi đến khi AI viết code bạn không dùng mới tốn.</div>
+          <div class="takeaway-text">Khi do dự, <strong>đừng ép mình phải biết đang do dự vì điều gì</strong>. Một câu "cần chỉnh sửa" rồi pivot sang "xuất plan ra file để tôi review" tốn ít năng lượng hơn là cố gắng diễn đạt chính xác đang lăn tăn chỗ nào — và thường cho kết quả tốt hơn vì bạn review được artifact cụ thể thay vì không khí.</div>
         </div>
       </div>
     </article>
+
+    <!-- Bridge P5 → P6 -->
+    <div class="bridge">
+      <span class="bridge-label">Sau P5</span>
+      <span class="bridge-text">
+        User mở <code>plan.md</code> đọc qua. Plan trông ổn nhưng user muốn biết AI định
+        <strong>thực thi nó thế nào</strong> — plan chỉ kể ra <em>cái gì</em> cần làm,
+        chưa nói rõ <em>cách</em> sẽ làm (sequential hay parallel? có kiểm tra giữa chừng
+        không? dùng subagent nào?). Thay vì đọc mò, user hỏi thẳng.
+      </span>
+    </div>
 
     <!-- P6 -->
     <article class="prompt-card">
@@ -1877,6 +2023,17 @@ footer {
       </div>
     </article>
 
+    <!-- Bridge P6 → P7 -->
+    <div class="bridge">
+      <span class="bridge-label">Sau P6</span>
+      <span class="bridge-text">
+        AI mô tả workflow bằng diagram ASCII + giải thích sequencing.
+        User hài lòng với <em>chiến lược</em> nhưng chưa biết AI sẽ kích hoạt
+        <strong>công cụ cụ thể</strong> nào — một lớp chi tiết nữa cần audit trước khi
+        bấm "Chạy". Câu hỏi tiếp theo xuống một tầng: từ <em>workflow</em> sang <em>instrumentation</em>.
+      </span>
+    </div>
+
     <!-- P7 -->
     <article class="prompt-card">
       <div class="prompt-head">
@@ -1911,6 +2068,17 @@ footer {
         </div>
       </div>
     </article>
+
+    <!-- Bridge P7 → P8 -->
+    <div class="bridge">
+      <span class="bridge-label">Sau P7</span>
+      <span class="bridge-text">
+        AI liệt kê 3 agents (<code>fullstack-developer</code>, <code>code-reviewer</code>,
+        <code>code-simplifier</code>) + 5 skills và điều kiện kích hoạt. Mọi thứ đã rõ:
+        plan có, workflow có, danh sách công cụ có. Không còn gì để audit. Lúc này
+        một câu lệnh ngắn là đủ.
+      </span>
+    </div>
 
     <!-- P8 -->
     <article class="prompt-card">
@@ -1960,6 +2128,18 @@ footer {
       </div>
     </article>
 
+    <!-- Bridge P8 → P9 -->
+    <div class="bridge">
+      <span class="bridge-label">Sau P8</span>
+      <span class="bridge-text">
+        ~15 phút implementation trôi qua — 6 phase xong, code review xong, 3 fix đã apply,
+        build sạch. AI báo "Done! Cách chạy: <code>npm run dev</code>." User nhìn code,
+        nhận ra <code>flight-api.ts</code> đang đọc <code>VITE_KIWI_API_KEY</code> từ
+        <code>.env</code> — nhưng trong suốt session chưa ai nói đến việc đăng ký lấy key.
+        Đây là phần <strong>AI không thể tự làm hộ</strong>.
+      </span>
+    </div>
+
     <!-- P9 -->
     <article class="prompt-card">
       <div class="prompt-head">
@@ -1994,6 +2174,17 @@ footer {
         </div>
       </div>
     </article>
+
+    <!-- Bridge P9 → P10 -->
+    <div class="bridge">
+      <span class="bridge-label">Sau P9</span>
+      <span class="bridge-text">
+        User làm theo hướng dẫn (vào tequila.kiwi.com) nhưng trang đăng ký không load được
+        — có thể do lỗi mạng, có thể do portal của Kiwi đã thay đổi. Dù nguyên nhân gì,
+        đây là <strong>blocker thật</strong> làm vỡ deliverable. Thay vì tự debug network,
+        user chọn báo thẳng cho AI.
+      </span>
+    </div>
 
     <!-- P10 -->
     <article class="prompt-card">
@@ -2034,6 +2225,18 @@ footer {
       </div>
     </article>
 
+    <!-- Bridge P10 → P11 -->
+    <div class="bridge">
+      <span class="bridge-label">Sau P10</span>
+      <span class="bridge-text">
+        AI đưa ra 3 lựa chọn: thử lại Kiwi, chuyển sang Amadeus, hoặc bỏ hẳn real-time API
+        dùng mock data. Mỗi phương án có trade-off khác nhau. User cân nhắc nhanh — demo
+        không cần real flight data, điều quan trọng là <em>flow chạy được</em> trên sân khấu.
+        Chọn phương án an toàn nhất. Đồng thời tận dụng cơ hội để thêm feature mới
+        (autocomplete sân bay) và giữ lại phần <em>thật</em> của demo: weather.
+      </span>
+    </div>
+
     <!-- P11 -->
     <article class="prompt-card">
       <div class="prompt-head">
@@ -2069,45 +2272,6 @@ footer {
         <div class="takeaway">
           <div class="takeaway-label">Bài học</div>
           <div class="takeaway-text">Pivot giữa build rẻ nếu mô tả ở đúng độ cao. "<strong>Dùng mock data, giữ weather thật</strong>" là lệnh CÁI GÌ; các lựa chọn cài đặt (seeded RNG, ước lượng thời gian theo khoảng cách) vẫn thuộc về AI.</div>
-        </div>
-      </div>
-    </article>
-
-    <!-- P12 -->
-    <article class="prompt-card">
-      <div class="prompt-head">
-        <div class="prompt-ord">P12</div>
-        <div class="prompt-meta">
-          <div class="prompt-tag">
-            <span class="time">00:44</span>
-            <span class="dot"></span>
-            <span>Ghi lại phiên làm việc</span>
-            <span class="dot"></span>
-            <span>skill · /frontend-design</span>
-          </div>
-          <h3 class="prompt-title">Cho AI tự viết tài liệu training cho chính nó.</h3>
-        </div>
-      </div>
-      <div class="prompt-body">
-        <blockquote class="quote">Tôi đang muốn ghi lại rõ từng bước tôi đã nói chuyện với bạn trong cuộc trò chuyện này. … xuất 1 file HTML static, tập trung vào từng prompt tôi viết, skill đã sử dụng (kèm mục đích skill đó), mục đích là gì, kết quả là gì… Sử dụng skill /ck:frontend-design để làm file HTML nha</blockquote>
-
-        <div class="meta-grid">
-          <div class="meta-k">Ý định</div>
-          <div class="meta-v">Biến một phiên làm việc đơn lẻ thành artifact có thể tái hiện, mà không cần rời khỏi công cụ.</div>
-          <div class="meta-k">Skill</div>
-          <div class="meta-v"><code>/frontend-design</code> · web interface production-grade từ spec — chọn vì deliverable là một trang training standalone, không phải báo cáo markdown.</div>
-          <div class="meta-k">Kết quả</div>
-          <div class="meta-v">Tài liệu này.</div>
-        </div>
-
-        <div class="ai-reply">
-          <div class="ai-reply-label">Phản hồi của AI</div>
-          <div class="ai-reply-text">Invoke <code>/frontend-design</code> skill. Theo Design Thinking workflow: chọn hướng editorial/technical magazine — serif display, asymmetric grid, atmosphere dark plum-amber. Viết 1 file HTML self-contained (~1700 dòng CSS + HTML + JS) với 9 section: Hero, Project, Workflow, 12 Prompt cards, Skills, Subagents, Learnings, Timeline, Reproduce, Artifacts. Các lần iterate sau: dịch sang tiếng Việt + đổi font Be Vietnam Pro (Instrument Serif không đủ Unicode), compile React app thành vanilla JS nhúng vào đầu trang để user tương tác, deploy lên GitHub Pages tại <code>mor-nhatlq.github.io/AI-demo-flight-scouter</code>.</div>
-        </div>
-
-        <div class="takeaway">
-          <div class="takeaway-label">Bài học</div>
-          <div class="takeaway-text">AI đã có context đầy đủ về những gì vừa xảy ra. Yêu cầu nó tạo artifact giảng dạy ngay trong cùng phiên rẻ hơn hẳn viết ghi chú sau — và chi tiết còn tươi mới.</div>
         </div>
       </div>
     </article>
