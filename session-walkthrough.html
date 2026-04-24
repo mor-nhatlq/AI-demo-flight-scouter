@@ -640,6 +640,7 @@ section.page {
   color: var(--ink-1);
   font-size: 14px;
   line-height: 1.6;
+  white-space: pre-wrap;
 }
 .ai-reply-text code {
   font-family: var(--mono);
@@ -1620,12 +1621,9 @@ footer {
 <section id="workflow" class="page reveal">
   <header class="section-head">
     <div class="section-num">§ 01 — Quy trình</div>
-    <h2 class="section-title">Sáu bước, <span class="accent">đúng thứ tự.</span></h2>
+    <h2 class="section-title">6 bước, <span class="accent">chạy tuần tự.</span></h2>
     <p class="section-lead">
-      Mỗi bước mở khoá bước tiếp theo. Phần research chạy song song vì các truy vấn
-      độc lập; phần implement chạy tuần tự vì mọi phase đều sửa
-      <code style="font-family:var(--mono);font-size:13px;color:var(--accent-amber)">App.tsx</code>.
-      Pivot ở bước sáu được xử lý inline — không cần quay lại planning.
+      Các bước làm việc chính với AI, từ khâu lên ý tưởng tới coding và hiện thành quả.
     </p>
   </header>
 
@@ -1633,37 +1631,37 @@ footer {
     <div class="flow-step">
       <div class="num">01 / Khám phá</div>
       <div class="title">Brainstorm</div>
-      <div class="desc">Scout project, làm rõ mục tiêu, khán giả, ràng buộc qua AskUserQuestion.</div>
+      <div class="desc">Khám phá project, làm rõ yêu cầu, khán giả, có ràng buộc để gia tăng tương tác với con người.</div>
       <span class="arrow">›</span>
     </div>
     <div class="flow-step">
       <div class="num">02 / Thu thập</div>
       <div class="title">Research</div>
-      <div class="desc">Hai researcher subagent chạy nền song song: flight APIs + weather APIs.</div>
+      <div class="desc">Subagent chạy song song, với mục đích nghiên cứu các đầu việc độc lập. Ví dụ: 1 Subagent tìm hiểu API lấy chuyến bay, 1 Subagent tìm hiểu tech stack, ...</div>
       <span class="arrow">›</span>
     </div>
     <div class="flow-step">
       <div class="num">03 / Quyết định</div>
       <div class="title">Plan</div>
-      <div class="desc">Brainstorm report + plan 6 phase được viết vào thư mục dự án.</div>
+      <div class="desc">Viết báo cáo Brainstorm và Plan/Phases để tạo website.</div>
       <span class="arrow">›</span>
     </div>
     <div class="flow-step">
       <div class="num">04 / Xây dựng</div>
       <div class="title">Implement</div>
-      <div class="desc">fullstack-developer subagent, mỗi lần một phase, build check giữa các phase.</div>
+      <div class="desc">Chạy fullstack-developer subagent, mỗi lần một phase, build check giữa các phase.</div>
       <span class="arrow">›</span>
     </div>
     <div class="flow-step">
       <div class="num">05 / Kiểm tra</div>
       <div class="title">Review</div>
-      <div class="desc">code-reviewer subagent báo ba lỗi; main agent fix trực tiếp.</div>
+      <div class="desc">Chạy subagent để review code và sửa lỗi người dùng báo về.</div>
       <span class="arrow">›</span>
     </div>
     <div class="flow-step">
       <div class="num">06 / Pivot</div>
       <div class="title">Refactor</div>
-      <div class="desc">User bỏ API live; chuyển sang mock generator + autocomplete sân bay tại chỗ.</div>
+      <div class="desc">Chỉnh sửa code để cải thiện và phù hợp với nhu cầu sử dụng hơn.</div>
     </div>
   </div>
 </section>
@@ -1695,7 +1693,7 @@ footer {
             <span class="dot"></span>
             <span>skill · /brainstorm</span>
           </div>
-          <h3 class="prompt-title">Nêu mục tiêu, không nêu công nghệ.</h3>
+          <h3 class="prompt-title">Tập trung vào nói rõ mục tiêu.</h3>
         </div>
       </div>
       <div class="prompt-body">
@@ -1703,21 +1701,25 @@ footer {
 
         <div class="meta-grid">
           <div class="meta-k">Ý định</div>
-          <div class="meta-v">Định hình dự án bằng <strong>lý do tồn tại</strong> — một live demo chứng minh AI-driven development — trước khi đả động đến stack hay danh sách tính năng.</div>
+          <div class="meta-v">Định hình dự án bằng <strong>lý do tồn tại</strong> trước khi đả động đến stack hay danh sách tính năng.</div>
           <div class="meta-k">Skill</div>
-          <div class="meta-v"><code>/brainstorm</code> · Solution Brainstormer: áp dụng YAGNI/KISS/DRY, bắt buộc hỏi làm rõ trước khi code.</div>
+          <div class="meta-v"><code>/brainstorm</code> · Skill /brainstorm tự viết. Áp dụng các quy chuẩn brainstorm như YAGNI/KISS/DRY, bắt buộc hỏi người dùng để làm rõ trước khi code.</div>
           <div class="meta-k">Kết quả</div>
-          <div class="meta-v">AI scout workspace, sau đó hỏi bốn câu trắc nghiệm (nguồn dữ liệu, stack, thời lượng demo, khán giả) qua <code>AskUserQuestion</code>.</div>
+          <div class="meta-v">AI khởi tạo dự án, sau đó hỏi bốn câu hỏi (nguồn dữ liệu, stack, thời lượng demo, khán giả) qua <code>AskUserQuestion</code>.</div>
         </div>
 
         <div class="ai-reply">
           <div class="ai-reply-label">Phản hồi của AI</div>
-          <div class="ai-reply-text">"Tuyệt vời! Một dự án demo rất hay — website tìm kiếm chuyến bay để showcase AI-driven development." AI spawn <code>Explore</code> subagent scout workspace, xác nhận project trống. Sau đó gọi <code>AskUserQuestion</code> với 4 câu: (1) nguồn dữ liệu — mock / real API / hybrid, (2) tech stack — Next.js / React+Vite / vanilla, (3) thời lượng demo — 15-20 / 30-45 / 60+ phút, (4) khán giả — business / developers / mixed.</div>
+          <div class="ai-reply-text">"Tuyệt vời! Một dự án demo rất hay — website tìm kiếm chuyến bay để showcase AI-driven development."<br>Sau đó, AI khởi tạo <code>Explore</code> subagent để tạo project, gọi <code>AskUserQuestion</code> với 4 câu:
+              (1) nguồn dữ liệu — mock / real API / hybrid
+              (2) tech stack — Next.js / React+Vite / vanilla
+              (3) thời lượng demo — 15-20 / 30-45 / 60+ phút
+              (4) khán giả — business / developers / mixed.</div>
         </div>
 
         <div class="takeaway">
           <div class="takeaway-label">Bài học</div>
-          <div class="takeaway-text">Mở đầu bằng <strong>tại sao</strong>, không phải <strong>cái gì</strong>. Cho AI biết lý do kinh doanh thì nó sẽ đề xuất scope phù hợp, thay vì ngoan ngoãn implement cái bạn gõ ra đầu tiên.</div>
+          <div class="takeaway-text">Mở đầu bằng <strong>tại sao</strong>, không phải <strong>cái gì</strong>. Cho AI biết lý do kinh doanh thì nó sẽ đề xuất scope phù hợp, thay vì implement luôn yêu cầu mình gõ ra đầu tiên.</div>
         </div>
       </div>
     </article>
@@ -1753,8 +1755,16 @@ footer {
       </div>
       <div class="prompt-body">
 
+        <p style="margin:0 0 20px;padding:12px 16px;background:var(--surface-1);border:1px solid var(--border-1);border-radius:var(--radius-m);color:var(--ink-2);font-size:13px;line-height:1.6;">
+          <strong style="color:var(--ink-1);font-weight:500;">Lưu ý về format:</strong>
+          User không gõ text tự do ở P2. Trả lời qua UI <code style="font-family:var(--mono);font-size:12px;padding:1px 6px;background:var(--surface-2);border-radius:4px;color:var(--accent-amber);">AskUserQuestion</code> —
+          mỗi câu chọn 1 option (hoặc "Other" để gõ custom). Với câu "Nguồn dữ liệu" và
+          "Thời lượng demo", user chọn "Other" để thêm ràng buộc riêng. Card này hiển thị
+          lại các câu trả lời đã submit.
+        </p>
+
         <div class="answer-block">
-          <div class="answer-q">Nguồn dữ liệu</div>
+          <div class="answer-q">Nguồn dữ liệu <span style="color:var(--accent-amber);font-weight:500;">· Other</span></div>
           <div class="answer-a">Gọi API thật, có option API nào khác ko, ví dụ như từ OpenAPI hay Google Flights. Tìm hiểu giúp tôi xem có các free option nào nha.</div>
         </div>
         <div class="answer-block">
@@ -1762,7 +1772,7 @@ footer {
           <div class="answer-a">React + Vite</div>
         </div>
         <div class="answer-block">
-          <div class="answer-q">Thời lượng demo</div>
+          <div class="answer-q">Thời lượng demo <span style="color:var(--accent-amber);font-weight:500;">· Other</span></div>
           <div class="answer-a">30 phút tối đa, có search + results + filter/sort. UI bắt mắt và giữ đơn giản. Có hiển thị thời tiết trong khoảng thời gian mà người dùng chọn tại điểm đến nữa.</div>
         </div>
         <div class="answer-block">
